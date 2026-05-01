@@ -39,7 +39,7 @@
 
 # MARKDOWN ********************
 
-# ### Cell 1 — Imports and Configuration
+# ### Imports and Configuration
 
 # CELL ********************
 
@@ -79,7 +79,7 @@ PARAMS = {
 
 # MARKDOWN ********************
 
-# ### Cell 2 — Fetch Data from API
+# ### Fetch Data from API
 
 # CELL ********************
 
@@ -102,7 +102,7 @@ print(f"Records fetched: {len(data)}")
 
 # MARKDOWN ********************
 
-# ### Cell 3 — Define Schema and Build DataFrame
+# ### Define Schema and Build DataFrame
 
 # CELL ********************
 
@@ -136,8 +136,15 @@ column_types = {
 
 pdf = pd.DataFrame(data)[list(column_types.keys())]
 
+# Safe type casting: numeric fields must be converted to float first before
+# casting to integer types, since the API may return values like 0.0 or 1.0
+# that pandas cannot directly cast from float64 to Int64.
 for col, dtype in column_types.items():
-    pdf[col] = pdf[col].astype(dtype)
+    if dtype in ("Int64", "Int32"):
+        pdf[col] = pd.to_numeric(pdf[col], errors="coerce").round(0).astype(dtype)
+    else:
+        pdf[col] = pdf[col].astype(dtype)
+
 
 df = spark.createDataFrame(pdf)
 
@@ -163,7 +170,7 @@ df.printSchema()
 
 # MARKDOWN ********************
 
-# ### Cell 4 — Idempotency Check and Write to Delta
+# ### Idempotency Check and Write to Delta
 
 # CELL ********************
 
@@ -203,7 +210,7 @@ else:
 
 # MARKDOWN ********************
 
-# ### Cell 5 — Validation
+# ### Validation
 
 # CELL ********************
 
