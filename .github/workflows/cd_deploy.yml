@@ -1,1 +1,41 @@
 
+# Promotes content from DEV to PRD via Fabric Deployment Pipeline API.
+# Triggered automatically when a pull request is merged into main.
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get Azure access token
+        id: auth
+        run: |
+          TOKEN=$(curl -s -X POST \
+            "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" \
+            -d "grant_type=client_credentials" \
+            -d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -d "scope=https://api.fabric.microsoft.com/.default" \
+            | jq -r '.access_token')
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Trigger Fabric Deployment Pipeline (DEV -> PRD)
+        run: |
+          curl -s -X POST \
+            "https://api.fabric.microsoft.com/v1/deploymentPipelines/${{ secrets.FABRIC_DEPLOYMENT_PIPELINE_ID }}/deploy" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "sourceStageOrder": 0,
+              "isBackwardDeployment": false,
+              "newWorkspace": null,
+              "note": "Automated deployment via GitHub Actions"
+            }' \
+            -w "\nHTTP Status: %{http_code}"
