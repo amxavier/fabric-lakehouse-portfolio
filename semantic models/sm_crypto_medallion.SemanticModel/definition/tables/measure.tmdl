@@ -1,0 +1,76 @@
+table measure
+	lineageTag: f73f536c-5e09-48fd-ba19-8b0c8871e4e2
+
+	measure 'Total Market Cap (USD)' = ```
+			
+			SUMX(fact_prices, fact_prices[market_cap])
+			
+			```
+		formatString: 0
+		lineageTag: 481961e5-666c-4405-912b-24c21c7078df
+
+	measure 'Total Volume 24h (USD)' = ```
+			
+			SUMX(fact_prices, fact_prices[total_volume])
+			
+			```
+		formatString: 0
+		lineageTag: 3f976d3f-8f6b-46de-ba8b-2ed58cfd909e
+
+	measure 'Avg Price vs ATH (%)' = ```
+			
+			AVERAGE(fact_prices[price_vs_ath_pct])
+			
+			```
+		lineageTag: 045f8504-136f-43a8-8dcb-e25e5dcba8ea
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Top Coin' = ```
+			
+			FIRSTNONBLANK(
+			    TOPN(1, VALUES(dim_coin[name]), [Total Market Cap (USD)], DESC),
+			    1
+			)
+			
+			```
+		lineageTag: 8fbf9a85-ac43-4868-98e4-a94597563325
+
+	measure 'Avg Price Change 7d (%)' = ```
+			
+			AVERAGE(fact_prices[price_change_pct_7d])
+			
+			```
+		lineageTag: 46ec6c50-ca91-41c2-9158-f04c6ca26d53
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Large Cap Dominance (%)' = ```
+			
+			DIVIDE(
+			    CALCULATE(SUMX(fact_prices, fact_prices[market_cap]), dim_coin[market_cap_category] = "Large Cap"),
+			    SUMX(fact_prices, fact_prices[market_cap])
+			) * 100
+			
+			```
+		lineageTag: ad2c5a18-82cb-4479-9aa4-4d406210cacd
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Column
+		formatString: 0
+		lineageTag: 33ea57d9-a122-4dd2-adfb-d39a88722656
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition measure = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 02376f842cf94eb8898d5ee1aa05d11a
+
+	annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":""}
+

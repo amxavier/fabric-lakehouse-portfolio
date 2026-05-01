@@ -1,0 +1,69 @@
+{
+  "config": "{\"version\":\"5.72\",\"themeCollection\":{\"baseTheme\":{\"name\":\"CY26SU04\",\"type\":2,\"version\":{\"visual\":\"2.8.0\",\"report\":\"3.2.0\",\"page\":\"2.3.1\"}}},\"activeSectionIndex\":0,\"defaultDrillFilterOtherVisuals\":true,\"linguisticSchemaSyncVersion\":0,\"settings\":{\"useNewFilterPaneExperience\":true,\"allowChangeFilterTypes\":true,\"useStylableVisualContainerHeader\":true,\"queryLimitOption\":6,\"useEnhancedTooltips\":true,\"exportDataMode\":1,\"useDefaultAggregateDisplayName\":true},\"objects\":{\"section\":[{\"properties\":{\"verticalAlignment\":{\"expr\":{\"Literal\":{\"Value\":\"'Top'\"}}}}}],\"outspacePane\":[{\"properties\":{\"expanded\":{\"expr\":{\"Literal\":{\"Value\":\"false\"}}}}}]},\"creationSource\":\"QuickCreate\"}",
+  "layoutOptimization": 1,
+  "resourcePackages": [
+    {
+      "resourcePackage": {
+        "disabled": false,
+        "items": [
+          {
+            "name": "CY26SU04",
+            "path": "BaseThemes/CY26SU04.json",
+            "type": 202
+          }
+        ],
+        "name": "SharedResources",
+        "type": 2
+      }
+    }
+  ],
+  "sections": [
+    {
+      "config": "{}",
+      "displayName": "crypto_overview",
+      "displayOption": 1,
+      "filters": "[]",
+      "height": 720.00,
+      "name": "b17497d184109670e075",
+      "visualContainers": [
+        {
+          "config": "{\"name\":\"171220752c957129094e\",\"layouts\":[{\"id\":0,\"position\":{\"x\":0,\"y\":233.28519855595667,\"z\":2,\"width\":1280.1444043321299,\"height\":486.7148014440433,\"tabOrder\":2}},{\"id\":1,\"position\":{\"x\":0,\"y\":451,\"z\":4,\"width\":324,\"height\":120}}],\"singleVisual\":{\"visualType\":\"columnChart\",\"projections\":{\"Category\":[{\"queryRef\":\"dim_coin.name\",\"active\":true}],\"Y\":[{\"queryRef\":\"measure.Avg Price vs ATH (%)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0},{\"Name\":\"d\",\"Entity\":\"dim_coin\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"d\"}},\"Property\":\"name\"},\"Name\":\"dim_coin.name\",\"NativeReferenceName\":\"name\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Avg Price vs ATH (%)\"},\"Name\":\"measure.Avg Price vs ATH (%)\",\"NativeReferenceName\":\"Avg Price vs ATH (%)\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Avg Price vs ATH (%)\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[]",
+          "height": 486.71,
+          "width": 1280.14,
+          "x": 0.00,
+          "y": 233.29,
+          "z": 2.00
+        },
+        {
+          "config": "{\"name\":\"780581c8763705b20a0a\",\"layouts\":[{\"id\":0,\"position\":{\"x\":9.70747562296858,\"y\":0,\"z\":0,\"width\":261.40845070422534,\"height\":232.97941495124596,\"tabOrder\":0}},{\"id\":1,\"position\":{\"x\":0,\"y\":0,\"z\":1,\"width\":324,\"height\":125}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Total Market Cap (USD)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"},\"Name\":\"measure.Total Market Cap (USD)\",\"NativeReferenceName\":\"Total Market Cap (USD)\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[]",
+          "height": 232.98,
+          "width": 261.41,
+          "x": 9.71,
+          "y": 0.00,
+          "z": 0.00
+        },
+        {
+          "config": "{\"name\":\"ac0d096916356ed5cec6\",\"layouts\":[{\"id\":0,\"position\":{\"x\":343.22860238353195,\"y\":0,\"z\":1,\"width\":261.40845070422534,\"height\":232.97941495124596,\"tabOrder\":1}},{\"id\":1,\"position\":{\"x\":0,\"y\":125,\"z\":2,\"width\":324,\"height\":122}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Top Coin\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Top Coin\"},\"Name\":\"measure.Top Coin\",\"NativeReferenceName\":\"Top Coin\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 232.98,
+          "width": 261.41,
+          "x": 343.23,
+          "y": 0.00,
+          "z": 1.00
+        },
+        {
+          "config": "{\"name\":\"c33aabcdbab6820767b7\",\"layouts\":[{\"id\":0,\"position\":{\"x\":603.6823104693141,\"y\":0,\"z\":3,\"width\":676.4620938628159,\"height\":233.28519855595667,\"tabOrder\":3}},{\"id\":1,\"position\":{\"x\":0,\"y\":241,\"z\":3,\"width\":324,\"height\":188}}],\"singleVisual\":{\"visualType\":\"donutChart\",\"projections\":{\"Category\":[{\"queryRef\":\"dim_coin.market_cap_category\",\"active\":true}],\"Y\":[{\"queryRef\":\"measure.Total Market Cap (USD)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"d\",\"Entity\":\"dim_coin\",\"Type\":0},{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"d\"}},\"Property\":\"market_cap_category\"},\"Name\":\"dim_coin.market_cap_category\",\"NativeReferenceName\":\"market_cap_category\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"},\"Name\":\"measure.Total Market Cap (USD)\",\"NativeReferenceName\":\"Total Market Cap (USD)\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[]",
+          "height": 233.29,
+          "width": 676.46,
+          "x": 603.68,
+          "y": 0.00,
+          "z": 3.00
+        }
+      ],
+      "width": 1280.00
+    }
+  ]
+}

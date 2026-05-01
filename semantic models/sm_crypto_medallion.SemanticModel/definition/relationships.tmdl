@@ -1,0 +1,8 @@
+relationship 3860661b-54d3-4269-09af-c2564400ab96
+	fromColumn: fact_prices.coin_id
+	toColumn: dim_coin.coin_id
+
+relationship 045cb8f8-7d4f-fd78-beef-35b1fd7943a2
+	fromColumn: fact_prices.date_id
+	toColumn: dim_date.date_id
+

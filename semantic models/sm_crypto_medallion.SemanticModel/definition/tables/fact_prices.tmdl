@@ -1,0 +1,170 @@
+table fact_prices
+	lineageTag: 9039c889-ddcc-411b-99dc-a4387badfa71
+	sourceLineageTag: [dbo].[fact_prices]
+
+	column coin_id
+		dataType: string
+		lineageTag: 5d62c6af-7250-4b18-baa3-33d7bbb02785
+		sourceLineageTag: coin_id
+		summarizeBy: none
+		sourceColumn: coin_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 8ca0b7a3-4e88-44e6-a14c-bf49504eac14
+		sourceLineageTag: date_id
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column ingestion_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f033fb49-1676-44d9-9cd9-8d42a37156a2
+		sourceLineageTag: ingestion_date
+		summarizeBy: none
+		sourceColumn: ingestion_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column current_price
+		dataType: double
+		lineageTag: 69d82c30-7534-43e5-ab13-0ec89dcda106
+		sourceLineageTag: current_price
+		summarizeBy: sum
+		sourceColumn: current_price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column market_cap
+		dataType: int64
+		formatString: 0
+		lineageTag: c1352008-15d7-440e-8eb4-8d40ebe93560
+		sourceLineageTag: market_cap
+		summarizeBy: sum
+		sourceColumn: market_cap
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_volume
+		dataType: int64
+		formatString: 0
+		lineageTag: 979929bc-dfb6-45d2-9dcf-72b52a084c22
+		sourceLineageTag: total_volume
+		summarizeBy: sum
+		sourceColumn: total_volume
+
+		annotation SummarizationSetBy = Automatic
+
+	column high_24h
+		dataType: double
+		lineageTag: bad6c9f6-da79-419d-bc73-ee350d44d4ec
+		sourceLineageTag: high_24h
+		summarizeBy: sum
+		sourceColumn: high_24h
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column low_24h
+		dataType: double
+		lineageTag: 3a3978c6-d502-4fd8-95a6-7c0e6014e25c
+		sourceLineageTag: low_24h
+		summarizeBy: sum
+		sourceColumn: low_24h
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column price_change_24h
+		dataType: double
+		lineageTag: cbf43e5e-27a9-41a7-8fb2-7d25e8818689
+		sourceLineageTag: price_change_24h
+		summarizeBy: sum
+		sourceColumn: price_change_24h
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column price_change_percentage_24h
+		dataType: double
+		lineageTag: d8bf6569-7a3a-4e80-9f0a-f521afaa0f84
+		sourceLineageTag: price_change_percentage_24h
+		summarizeBy: sum
+		sourceColumn: price_change_percentage_24h
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column price_change_pct_7d
+		dataType: double
+		lineageTag: c7a8abec-5ed3-41ee-8ee0-2c547070f7cc
+		sourceLineageTag: price_change_pct_7d
+		summarizeBy: sum
+		sourceColumn: price_change_pct_7d
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column price_change_pct_30d
+		dataType: double
+		lineageTag: b3715f86-6a44-468b-9671-011991dddeee
+		sourceLineageTag: price_change_pct_30d
+		summarizeBy: sum
+		sourceColumn: price_change_pct_30d
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column price_vs_ath_pct
+		dataType: double
+		lineageTag: 4f087d8d-07b8-409b-941b-a69f9a31a2ff
+		sourceLineageTag: price_vs_ath_pct
+		summarizeBy: sum
+		sourceColumn: price_vs_ath_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column volume_to_market_cap_ratio
+		dataType: double
+		lineageTag: 021f3387-528e-4042-8793-d221c8a0f76b
+		sourceLineageTag: volume_to_market_cap_ratio
+		summarizeBy: sum
+		sourceColumn: volume_to_market_cap_ratio
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column market_dominance_pct
+		dataType: double
+		lineageTag: e30c23dc-a167-458c-933e-b4aa2914933f
+		sourceLineageTag: market_dominance_pct
+		summarizeBy: sum
+		sourceColumn: market_dominance_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_prices = entity
+		mode: directLake
+		source
+			entityName: fact_prices
+			schemaName: dbo
+			expressionSource: 'DirectLake - lh_gold_dev'
+
