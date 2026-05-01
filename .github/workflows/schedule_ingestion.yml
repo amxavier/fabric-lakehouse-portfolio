@@ -1,1 +1,33 @@
 
+# Triggers the Fabric orchestration pipeline daily at 6am UTC.
+# Keeps Bronze -> Silver -> Gold data fresh without manual intervention.
+name: Schedule - Daily Data Ingestion
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Azure access token
+        id: auth
+        run: |
+          TOKEN=$(curl -s -X POST \
+            "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" \
+            -d "grant_type=client_credentials" \
+            -d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -d "scope=https://api.fabric.microsoft.com/.default" \
+            | jq -r '.access_token')
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Trigger Fabric orchestration pipeline
+        run: |
+          curl -s -X POST \
+            "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_DEV }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID }}/jobs/instances?jobType=Pipeline" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}"
