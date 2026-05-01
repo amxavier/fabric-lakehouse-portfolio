@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "d75a272e-b5f9-4822-859f-51c084058231",
-# META       "default_lakehouse_name": "lh_silver_dev",
+# META       "default_lakehouse_name": "lh_silver",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -29,7 +29,7 @@
 # 
 # **Layer:** Silver — Cleansing & Enrichment  
 # **Source:** `lh_bronze_dev` → Delta Table `raw_crypto_prices`  
-# **Destination:** `lh_silver_dev` → Delta Table `silver_crypto_prices`  
+# **Destination:** `lh_silver` → Delta Table `silver_crypto_prices`  
 # **Schedule:** Daily (after Bronze ingestion)  
 # 
 # This notebook reads raw crypto data from the Bronze layer, applies data quality checks,
@@ -51,7 +51,7 @@ from delta.tables import DeltaTable
 
 # Tables in Fabric Lakehouse are stored under the default 'dbo' schema folder.
 # The path must include '/dbo/' to correctly resolve the Delta table location.
-bronze_abfs = notebookutils.lakehouse.get("lh_bronze_dev")["properties"]["abfsPath"]
+bronze_abfs = notebookutils.lakehouse.get("lh_bronze")["properties"]["abfsPath"]
 
 SOURCE_PATH       = f"{bronze_abfs}/Tables/dbo/raw_crypto_prices"
 DESTINATION_TABLE = "silver_crypto_prices"
@@ -91,7 +91,7 @@ print(f"New records to process: {record_count}")
 
 if record_count == 0:
     print("Silver is already up to date. Nothing to process.")
-    dbutils.notebook.exit("UP_TO_DATE")
+    notebookutils.notebook.exit("UP_TO_DATE")
 
 # METADATA ********************
 
@@ -152,7 +152,7 @@ df_typed = (
 
 # MARKDOWN ********************
 
-# ### ### Derived Business Metrics
+# ### Derived Business Metrics
 
 # CELL ********************
 

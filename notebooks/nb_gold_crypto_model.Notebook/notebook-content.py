@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "de113525-d92d-4596-8d5e-7de1cb332a5a",
-# META       "default_lakehouse_name": "lh_gold_dev",
+# META       "default_lakehouse_name": "lh_gold",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -30,7 +30,7 @@
 # 
 # **Layer:** Gold — Dimensional Modeling (Star Schema)  
 # **Source:** `lh_silver_dev` → Delta Table `silver_crypto_prices`  
-# **Destination:** `lh_gold_dev` → Delta Tables `dim_coin`, `dim_date`, `fact_prices`  
+# **Destination:** `lh_gold` → Delta Tables `dim_coin`, `dim_date`, `fact_prices`  
 # **Schedule:** Daily (after Silver transformation)  
 # 
 # This notebook builds the Star Schema for the semantic layer:
@@ -53,7 +53,7 @@ from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
 # Resolve Silver lakehouse ABFS path to read across lakehouses reliably.
-silver_abfs = notebookutils.lakehouse.get("lh_silver_dev")["properties"]["abfsPath"]
+silver_abfs = notebookutils.lakehouse.get("lh_silver")["properties"]["abfsPath"]
 
 SOURCE_PATH = f"{silver_abfs}/Tables/dbo/silver_crypto_prices"
 
