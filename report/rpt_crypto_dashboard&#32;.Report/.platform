@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "rpt_crypto_dashboard "
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "eae2aae9-7f2b-afa4-4fef-584294765d38"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_bronze_coingecko_ingestion"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "3b9031f7-ad23-8e15-4bca-4a87d535064a"
+  }
+}

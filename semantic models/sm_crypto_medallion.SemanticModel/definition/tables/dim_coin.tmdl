@@ -1,0 +1,101 @@
+table dim_coin
+	lineageTag: 9ecdd4d9-8f63-4852-8721-24fda1c35d98
+	sourceLineageTag: [dbo].[dim_coin]
+
+	column coin_id
+		dataType: string
+		lineageTag: 2f6bc1c2-a028-4aae-a753-28a9b90309f8
+		sourceLineageTag: coin_id
+		summarizeBy: none
+		sourceColumn: coin_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column symbol
+		dataType: string
+		lineageTag: fa6f8a7d-0f4f-4947-89f8-13ed35a46b3c
+		sourceLineageTag: symbol
+		summarizeBy: none
+		sourceColumn: symbol
+
+		annotation SummarizationSetBy = Automatic
+
+	column name
+		dataType: string
+		lineageTag: f8c62136-4c1f-4167-92ca-15c72091d0c5
+		sourceLineageTag: name
+		summarizeBy: none
+		sourceColumn: name
+
+		annotation SummarizationSetBy = Automatic
+
+	column current_rank
+		dataType: int64
+		formatString: 0
+		lineageTag: 85defa4d-794c-4e2f-8a6f-9e11d8b7635e
+		sourceLineageTag: current_rank
+		summarizeBy: none
+		sourceColumn: current_rank
+
+		annotation SummarizationSetBy = Automatic
+
+	column market_cap_category
+		dataType: string
+		lineageTag: 04134724-fa0c-44f6-b0da-7ddc1a09510a
+		sourceLineageTag: market_cap_category
+		summarizeBy: none
+		sourceColumn: market_cap_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column ath
+		dataType: double
+		lineageTag: 81e331a5-32d1-4e2c-b8fe-57bbb94693a1
+		sourceLineageTag: ath
+		summarizeBy: none
+		sourceColumn: ath
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column circulating_supply
+		dataType: double
+		lineageTag: e6f43963-235c-494f-aa46-89728aa90c20
+		sourceLineageTag: circulating_supply
+		summarizeBy: none
+		sourceColumn: circulating_supply
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column max_supply
+		dataType: double
+		lineageTag: 11350cf4-5795-4b14-a448-22467d0c90c0
+		sourceLineageTag: max_supply
+		summarizeBy: none
+		sourceColumn: max_supply
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_supply
+		dataType: double
+		lineageTag: b6481865-d22d-4c14-96ea-68d23cc5aabe
+		sourceLineageTag: total_supply
+		summarizeBy: none
+		sourceColumn: total_supply
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition dim_coin = entity
+		mode: directLake
+		source
+			entityName: dim_coin
+			schemaName: dbo
+			expressionSource: 'DirectLake - lh_gold_dev'
+
