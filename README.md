@@ -15,11 +15,11 @@ Data source: [CoinGecko Public API](https://www.coingecko.com/en/api) — top 10
 ```mermaid
 flowchart LR
     API["🌐 CoinGecko API\n/coins/markets"]
-    B["🥉 Bronze Layer\nraw_crypto_prices\n(Delta Table)"]
-    S["🥈 Silver Layer\nsilver_crypto_prices\n(Delta Table)"]
-    G["🥇 Gold Layer\nfact_prices\ndim_coin · dim_date\n(Star Schema)"]
-    SM["📊 Semantic Model\nsm_crypto_medallion\n(DAX Measures)"]
-    PBI["📈 Power BI Report\nrpt_crypto_dashboard"]
+    B["Bronze Layer\nraw_crypto_prices\n(Delta Table)"]
+    S["Silver Layer\nsilver_crypto_prices\n(Delta Table)"]
+    G["Gold Layer\nfact_prices\ndim_coin · dim_date\n(Star Schema)"]
+    SM["Semantic Model\nsm_crypto_medallion\n(DAX Measures)"]
+    PBI["Power BI Report\nrpt_crypto_dashboard"]
 
     API -->|"PySpark\nIngestion"| B
     B -->|"Clean &\nEnrich"| S
@@ -60,9 +60,9 @@ flowchart LR
 
 ```
 lakehouses_dev  (branch: dev)      lakehouses_prd  (branch: main)
-├── lh_bronze_dev                  ├── lh_bronze_prd
-├── lh_silver_dev                  ├── lh_silver_prd
-└── lh_gold_dev                    └── lh_gold_prd
+├── lh_bronze                      ├── lh_bronze
+├── lh_silver                      ├── lh_silver
+└── lh_gold                        └── lh_gold
 ```
 
 Promotion from DEV to PRD is managed by the **Fabric Deployment Pipeline** (`pipeline-medallion`), triggered automatically when a pull request is merged into `main`.
