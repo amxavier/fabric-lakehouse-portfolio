@@ -4,7 +4,7 @@
 [![CD Deploy](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml)
 [![Scheduled Ingestion](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml)
 
-End-to-end Data Engineering portfolio project on **Microsoft Fabric** implementing the **Medallion Architecture** (Bronze / Silver / Gold) with automated CI/CD via GitHub Actions.
+End-to-end Data Engineering project on **Microsoft Fabric** implementing the **Medallion Architecture** (Bronze / Silver / Gold) with automated CI/CD via GitHub Actions.
 
 Data source: [CoinGecko Public API](https://www.coingecko.com/en/api) — top 100 cryptocurrencies by market cap, ingested daily.
 
