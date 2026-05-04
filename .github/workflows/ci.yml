@@ -19,9 +19,9 @@ jobs:
           echo "Validating Fabric artifacts..."
 
           required=(
-            "lh_bronze_dev.Lakehouse"
-            "lh_silver_dev.Lakehouse"
-            "lh_gold_dev.Lakehouse"
+            "lh_bronze.Lakehouse"
+            "lh_silver.Lakehouse"
+            "lh_gold.Lakehouse"
             "nb_bronze_coingecko_ingestion.Notebook"
             "nb_silver_crypto_transform.Notebook"
             "nb_gold_crypto_model.Notebook"
