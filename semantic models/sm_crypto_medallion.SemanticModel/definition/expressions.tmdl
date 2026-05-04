@@ -1,6 +1,6 @@
-expression 'DirectLake - lh_gold_dev' =
+expression 'DirectLake - lh_gold' =
 		let
-		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/dc072922-4ffb-4424-868c-28087b02ecba/de113525-d92d-4596-8d5e-7de1cb332a5a", [HierarchicalNavigation=true])
+		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/990e6ef6-cc9a-47cf-8258-af5bc66bbad8/02e01c13-9c84-496c-8b9c-630ffc04c64a", [HierarchicalNavigation=true])
 		in
 		    Source
 	lineageTag: ec82b9bb-f024-42ca-bf7b-28a8ce597e3a
