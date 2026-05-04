@@ -178,4 +178,4 @@ microsoft-fabric-medallion-lakehouse/
 
 ---
 
-*Built as a Data Engineering portfolio project to demonstrate end-to-end skills on the Microsoft Fabric platform.*
+*Built as a Data Engineering project to demonstrate end-to-end skills on the Microsoft Fabric platform.*
