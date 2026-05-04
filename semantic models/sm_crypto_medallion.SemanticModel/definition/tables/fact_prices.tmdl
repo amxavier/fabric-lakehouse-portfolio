@@ -166,5 +166,5 @@ table fact_prices
 		source
 			entityName: fact_prices
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_dev'
+			expressionSource: 'DirectLake - lh_gold'
 
