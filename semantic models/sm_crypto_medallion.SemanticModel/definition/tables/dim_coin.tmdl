@@ -97,5 +97,5 @@ table dim_coin
 		source
 			entityName: dim_coin
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold'
+			expressionSource: 'DirectLake - lh_gold_dev'
 

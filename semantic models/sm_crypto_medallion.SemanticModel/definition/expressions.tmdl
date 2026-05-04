@@ -1,4 +1,4 @@
-expression 'DirectLake - lh_gold' =
+expression 'DirectLake - lh_gold_dev' =
 		let
 		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/990e6ef6-cc9a-47cf-8258-af5bc66bbad8/02e01c13-9c84-496c-8b9c-630ffc04c64a", [HierarchicalNavigation=true])
 		in
