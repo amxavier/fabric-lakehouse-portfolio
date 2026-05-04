@@ -22,9 +22,11 @@ jobs:
             "lh_bronze.Lakehouse"
             "lh_silver.Lakehouse"
             "lh_gold.Lakehouse"
-            "nb_bronze_coingecko_ingestion.Notebook"
-            "nb_silver_crypto_transform.Notebook"
-            "nb_gold_crypto_model.Notebook"
+            "notebooks/nb_bronze_coingecko_ingestion.Notebook"
+            "notebooks/nb_silver_crypto_transform.Notebook"
+            "notebooks/nb_gold_crypto_model.Notebook"
+            "pipelines/pl_medallion_orchestration.DataPipeline"
+            "semantic models/sm_crypto_medallion.SemanticModel"
           )
 
           for artifact in "${required[@]}"; do

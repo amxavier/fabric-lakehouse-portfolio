@@ -1,6 +1,6 @@
 # Microsoft Fabric Medallion Lakehouse
 
-[![CI](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/ci.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/ci.yml)
+[![CI](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/ci.yml)
 [![CD Deploy](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml)
 [![Scheduled Ingestion](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml)
 
