@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "4b77bc3c-8482-4301-8454-b7b97ada8da8",
-# META       "default_lakehouse_name": "lh_bronze_dev",
+# META       "default_lakehouse_name": "lh_bronze",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -26,7 +26,7 @@
 # 
 # **Layer:** Bronze — Raw Ingestion  
 # **Source:** CoinGecko Public API (`/coins/markets`)  
-# **Destination:** `lh_bronze_dev` → Delta Table `raw_crypto_prices`  
+# **Destination:** `lh_bronze` → Delta Table `raw_crypto_prices`  
 # **Schedule:** Daily  
 # 
 # This notebook ingests the top 100 cryptocurrencies by market cap from the CoinGecko 
