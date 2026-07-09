@@ -28,8 +28,6 @@ class FabricClient:
             },
             timeout=30,
         )
-        if not resp.ok:
-            print(f"Auth failed {resp.status_code}: {resp.text}")
         resp.raise_for_status()
         self._token = resp.json()["access_token"]
         return self._token
