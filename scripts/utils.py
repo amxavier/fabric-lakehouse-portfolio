@@ -73,6 +73,78 @@ def read_item_parts(item_path: Path, replacements: dict[str, str] | None = None)
     return parts
 
 
+def get_notebook_logicalid_map(repo_root: Path) -> dict[str, str]:
+    """Return {logicalId: displayName} for all notebooks in the repo."""
+    mapping = {}
+    notebooks_dir = repo_root / "notebooks"
+    for folder in sorted(notebooks_dir.iterdir()):
+        if not (folder.is_dir() and folder.name.endswith(".Notebook")):
+            continue
+        platform_file = folder / ".platform"
+        if not platform_file.exists():
+            continue
+        data = json.loads(platform_file.read_text(encoding="utf-8"))
+        logical_id = data.get("config", {}).get("logicalId")
+        display_name = data.get("metadata", {}).get("displayName")
+        if logical_id and display_name:
+            mapping[logical_id] = display_name
+    return mapping
+
+
+def patch_pipeline_notebook_ids(parts: list[dict], logicalid_to_itemid: dict[str, str]) -> list[dict]:
+    """Replace notebook logicalIds in pipeline-content.json with actual workspace item IDs."""
+    patched = []
+    for part in parts:
+        if part["path"] == "pipeline-content.json":
+            raw = base64.b64decode(part["payload"])
+            content = json.loads(raw.decode("utf-8"))
+            for activity in content.get("properties", {}).get("activities", []):
+                if activity.get("type") == "TridentNotebook":
+                    logical_id = activity["typeProperties"].get("notebookId", "")
+                    if logical_id in logicalid_to_itemid:
+                        activity["typeProperties"]["notebookId"] = logicalid_to_itemid[logical_id]
+            updated = json.dumps(content, indent=2).encode("utf-8")
+            patched.append({
+                "path": part["path"],
+                "payload": base64.b64encode(updated).decode("ascii"),
+                "payloadType": "InlineBase64",
+            })
+        else:
+            patched.append(part)
+    return patched
+
+
+def patch_report_byconnection(parts: list[dict], sm_item_id: str) -> list[dict]:
+    """Replace byPath definition.pbir with a byConnection reference to the deployed semantic model."""
+    byconnection = {
+        "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
+        "version": "4.0",
+        "datasetReference": {
+            "byConnection": {
+                "connectionString": None,
+                "pbiServiceModelId": None,
+                "pbiModelVirtualServerName": "sobe_wowvirtualserver",
+                "pbiModelDatabaseName": sm_item_id,
+                "name": "EntityDataSource",
+                "connectionType": "pbiServiceXmlaStyleLive",
+            }
+        },
+    }
+    patched = []
+    for part in parts:
+        if part["path"] == "definition.pbir":
+            patched.append({
+                "path": "definition.pbir",
+                "payload": base64.b64encode(
+                    json.dumps(byconnection, indent=2).encode("utf-8")
+                ).decode("ascii"),
+                "payloadType": "InlineBase64",
+            })
+        else:
+            patched.append(part)
+    return patched
+
+
 def load_valuesets(repo_root: Path, branch: str) -> dict:
     path = repo_root / "config" / "valueSets" / f"{branch}.json"
     if not path.exists():
