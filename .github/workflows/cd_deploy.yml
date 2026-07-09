@@ -1,41 +1,48 @@
-
-# Promotes content from DEV to PRD via Fabric Deployment Pipeline API.
-# Triggered automatically when a pull request is merged into main.
-name: CD - Deploy to Production
+# Deploys Fabric artifacts directly to the target workspace via REST API.
+# Triggered on push to dev, qa, or main — each branch maps to its own workspace
+# via config/valueSets/{branch}.json. No Git Integration or Deployment Pipeline needed.
+name: CD - Deploy to Fabric
 
 on:
   push:
-    branches: ["main"]
+    branches: [dev, qa, main]
+    paths:
+      - "notebooks/**"
+      - "pipelines/**"
+      - "semantic models/**"
+      - "report/**"
+  workflow_dispatch:
+    inputs:
+      deploy_mode:
+        description: "Deploy mode"
+        required: false
+        default: "selective"
+        type: choice
+        options:
+          - selective
+          - full
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # needed for git diff HEAD~1 in selective mode
 
-      - name: Get Azure access token
-        id: auth
-        run: |
-          TOKEN=$(curl -s -X POST \
-            "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" \
-            -d "grant_type=client_credentials" \
-            -d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
-            -d "client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
-            -d "scope=https://api.fabric.microsoft.com/.default" \
-            | jq -r '.access_token')
-          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Trigger Fabric Deployment Pipeline (DEV -> PRD)
-        run: |
-          curl -s -X POST \
-            "https://api.fabric.microsoft.com/v1/deploymentPipelines/${{ secrets.FABRIC_DEPLOYMENT_PIPELINE_ID }}/deploy" \
-            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "sourceStageOrder": 0,
-              "isBackwardDeployment": false,
-              "newWorkspace": null,
-              "note": "Automated deployment via GitHub Actions"
-            }' \
-            -w "\nHTTP Status: %{http_code}"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Deploy artifacts
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          DEPLOY_MODE: ${{ github.event.inputs.deploy_mode || 'selective' }}
+        run: python scripts/deploy.py
