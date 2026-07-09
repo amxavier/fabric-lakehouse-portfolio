@@ -1,4 +1,5 @@
 # Fabric notebook source
+# Last deploy: automated via scripts/deploy.py (selective mode)
 
 # METADATA ********************
 
