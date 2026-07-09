@@ -1,0 +1,5 @@
+{
+  "environment": "qa",
+  "workspace_id": "<FILL_QA_WORKSPACE_ID>",
+  "onelake_url": "https://onelake.dfs.fabric.microsoft.com/<FILL_QA_WORKSPACE_ID>/<FILL_QA_LH_GOLD_ID>"
+}
