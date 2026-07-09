@@ -114,19 +114,18 @@ def patch_pipeline_notebook_ids(parts: list[dict], logicalid_to_itemid: dict[str
     return patched
 
 
-def patch_report_byconnection(parts: list[dict], sm_item_id: str) -> list[dict]:
-    """Replace byPath definition.pbir with a byConnection reference to the deployed semantic model."""
+def patch_report_byconnection(parts: list[dict], workspace_name: str, sm_display_name: str) -> list[dict]:
+    """Replace byPath definition.pbir with a byConnection using the XMLA endpoint connection string."""
+    connection_string = (
+        f"Data Source=powerbi://api.powerbi.com/v1.0/myorg/{workspace_name};"
+        f"Initial Catalog={sm_display_name}"
+    )
     byconnection = {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
         "version": "4.0",
         "datasetReference": {
             "byConnection": {
-                "connectionString": None,
-                "pbiServiceModelId": None,
-                "pbiModelVirtualServerName": "sobe_wowvirtualserver",
-                "pbiModelDatabaseName": sm_item_id,
-                "name": "EntityDataSource",
-                "connectionType": "pbiServiceXmlaStyleLive",
+                "connectionString": connection_string,
             }
         },
     }

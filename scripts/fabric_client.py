@@ -55,6 +55,15 @@ class FabricClient:
             time.sleep(_POLL_INTERVAL)
         raise TimeoutError(f"Operation did not complete within {_POLL_TIMEOUT}s")
 
+    def get_workspace_name(self, workspace_id: str) -> str:
+        resp = requests.get(
+            f"{_BASE_URL}/workspaces/{workspace_id}",
+            headers=self._headers(),
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()["displayName"]
+
     def get_workspace_items(self, workspace_id: str) -> list[dict]:
         items = []
         url = f"{_BASE_URL}/workspaces/{workspace_id}/items"

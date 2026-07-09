@@ -172,15 +172,17 @@ def main() -> None:
     if phase3:
         print("── Phase 3: Report ──")
         workspace_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id)}
-        sm_item_id = workspace_items.get("sm_crypto_medallion")
-        if not sm_item_id:
-            print("  FAILED: sm_crypto_medallion not found in workspace — deploy it first.\n")
+        sm_display_name = "sm_crypto_medallion"
+        if sm_display_name not in workspace_items:
+            print(f"  FAILED: {sm_display_name} not found in workspace — deploy it first.\n")
             failed.extend(get_display_name(p) for p in phase3)
         else:
-            print(f"  SemanticModel item ID: {sm_item_id}\n")
+            workspace_name = client.get_workspace_name(workspace_id)
+            print(f"  Workspace name : {workspace_name}")
+            print(f"  SemanticModel  : {sm_display_name}\n")
             for item_path in phase3:
                 parts = read_item_parts(item_path, replacements or None)
-                parts = patch_report_byconnection(parts, sm_item_id)
+                parts = patch_report_byconnection(parts, workspace_name, sm_display_name)
                 if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                     success += 1
                 else:
