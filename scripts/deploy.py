@@ -177,12 +177,13 @@ def main() -> None:
             print(f"  FAILED: {sm_display_name} not found in workspace — deploy it first.\n")
             failed.extend(get_display_name(p) for p in phase3)
         else:
+            sm_item_id = workspace_items[sm_display_name]
             workspace_name = client.get_workspace_name(workspace_id)
             print(f"  Workspace name : {workspace_name}")
-            print(f"  SemanticModel  : {sm_display_name}\n")
+            print(f"  SemanticModel  : {sm_display_name} ({sm_item_id})\n")
             for item_path in phase3:
                 parts = read_item_parts(item_path, replacements or None)
-                parts = patch_report_byconnection(parts, workspace_name, sm_display_name)
+                parts = patch_report_byconnection(parts, workspace_name, sm_display_name, sm_item_id)
                 if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                     success += 1
                 else:

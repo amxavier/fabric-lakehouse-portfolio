@@ -114,11 +114,12 @@ def patch_pipeline_notebook_ids(parts: list[dict], logicalid_to_itemid: dict[str
     return patched
 
 
-def patch_report_byconnection(parts: list[dict], workspace_name: str, sm_display_name: str) -> list[dict]:
+def patch_report_byconnection(parts: list[dict], workspace_name: str, sm_display_name: str, sm_item_id: str) -> list[dict]:
     """Replace byPath definition.pbir with a byConnection using the XMLA endpoint connection string."""
     connection_string = (
         f"Data Source=powerbi://api.powerbi.com/v1.0/myorg/{workspace_name};"
-        f"Initial Catalog={sm_display_name}"
+        f"Initial Catalog={sm_display_name};"
+        f"semanticModelId={sm_item_id}"
     )
     byconnection = {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
