@@ -26,17 +26,19 @@
 # MARKDOWN ********************
 
 # ### nb_silver_crypto_transform
-# 
-# **Layer:** Silver — Cleansing & Enrichment  
-# **Source:** `lh_bronze_dev` → Delta Table `raw_crypto_prices`  
-# **Destination:** `lh_silver` → Delta Table `silver_crypto_prices`  
-# **Schedule:** Daily (after Bronze ingestion)  
-# 
+#
+# **Layer:** Silver — Cleansing, Enrichment & SCD Type 2
+# **Source:** `lh_bronze` → Delta Table `raw_crypto_prices`
+# **Destination:** `lh_silver` → Delta Table `silver_crypto_prices`
+# **Schedule:** Daily (after Bronze ingestion)
+#
 # This notebook reads raw crypto data from the Bronze layer, applies data quality checks,
-# standardizes types, removes duplicates, and calculates derived business metrics.
-# 
-# Only unprocessed ingestion dates are loaded (incremental pattern), ensuring the pipeline
-# is safe to re-run without duplicating records in Silver.
+# standardizes types, and calculates derived business metrics.
+#
+# Records are written using **SCD Type 2** (Slowly Changing Dimension Type 2):
+# each day a new version of every coin is inserted, and the previous current row
+# is expired by setting `valid_to` and `is_current = False`.
+# This preserves full price history while enabling efficient point-in-time queries.
 
 
 # MARKDOWN ********************
@@ -46,11 +48,10 @@
 # CELL ********************
 
 from pyspark.sql import functions as F
+from pyspark.sql.types import DateType
 from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
-# Tables in Fabric Lakehouse are stored under the default 'dbo' schema folder.
-# The path must include '/dbo/' to correctly resolve the Delta table location.
 bronze_abfs = notebookutils.lakehouse.get("lh_bronze")["properties"]["abfsPath"]
 
 SOURCE_PATH       = f"{bronze_abfs}/Tables/dbo/raw_crypto_prices"
@@ -72,14 +73,14 @@ print(f"Source path: {SOURCE_PATH}")
 
 # CELL ********************
 
-# Read Bronze data using the ABFS path instead of table name,
-# since the source lives in a secondary (non-default) lakehouse.
+# Skip dates already present in Silver (checked against valid_from, which equals
+# ingestion_date for the version inserted on that day).
 df_bronze = spark.read.format("delta").load(SOURCE_PATH)
 
 if spark.catalog.tableExists(DESTINATION_TABLE):
     processed_dates = (
         spark.read.table(DESTINATION_TABLE)
-        .select("ingestion_date")
+        .select(F.col("valid_from").alias("ingestion_date"))
         .distinct()
     )
     df_new = df_bronze.join(processed_dates, on="ingestion_date", how="left_anti")
@@ -197,21 +198,67 @@ df_enriched = (
 
 # MARKDOWN ********************
 
-# ### Write to Silver Delta Table
+# ### SCD Type 2 — Add Validity Columns
 
 # CELL ********************
 
-# We use append mode here since incremental filtering in Cell 2 already
-# guarantees no duplicate ingestion_dates will be written.
-(
-    df_enriched.write
-    .format("delta")
-    .mode("append")
-    .option("mergeSchema", "true")
-    .saveAsTable(DESTINATION_TABLE)
+# Each version of a coin row carries three SCD Type 2 control columns:
+#   valid_from  — the ingestion_date this version became active
+#   valid_to    — the ingestion_date the next version replaced it (NULL = still current)
+#   is_current  — True for the latest version, False for all historical ones
+#
+# Point-in-time query:  WHERE valid_from <= '<date>' AND (valid_to > '<date>' OR valid_to IS NULL)
+# Latest state query:   WHERE is_current = True
+df_scd = (
+    df_enriched
+    .withColumn("valid_from", F.col("ingestion_date").cast(DateType()))
+    .withColumn("valid_to",   F.lit(None).cast(DateType()))
+    .withColumn("is_current", F.lit(True))
 )
 
-print(f"{df_enriched.count()} records written to '{DESTINATION_TABLE}'")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Write to Silver — SCD Type 2 Merge
+
+# CELL ********************
+
+if not spark.catalog.tableExists(DESTINATION_TABLE):
+    # Initial load — no previous versions to expire
+    (df_scd.write
+        .format("delta")
+        .mode("overwrite")
+        .option("mergeSchema", "true")
+        .saveAsTable(DESTINATION_TABLE))
+    print(f"{df_scd.count()} records written (initial load)")
+else:
+    dt = DeltaTable.forName(spark, DESTINATION_TABLE)
+
+    # Step 1 — Expire the current row for every coin that has a new version incoming.
+    # Sets valid_to = today's ingestion_date and flips is_current to False.
+    dt.alias("target").merge(
+        df_scd.alias("source"),
+        "target.id = source.id AND target.is_current = true"
+    ).whenMatchedUpdate(set={
+        "valid_to":   "source.valid_from",
+        "is_current": "false",
+    }).execute()
+
+    # Step 2 — Insert the new current versions.
+    (df_scd.write
+        .format("delta")
+        .mode("append")
+        .option("mergeSchema", "true")
+        .saveAsTable(DESTINATION_TABLE))
+
+    print(f"{df_scd.count()} new versions written")
 
 
 # METADATA ********************
@@ -227,7 +274,8 @@ print(f"{df_enriched.count()} records written to '{DESTINATION_TABLE}'")
 
 # CELL ********************
 
-# Spot-check: row counts and key derived metrics per ingestion date.
+# Current snapshot: one row per coin with is_current = True
+print("=== Current snapshot (is_current = True) ===")
 spark.sql(f"""
     SELECT
         ingestion_date,
@@ -236,8 +284,21 @@ spark.sql(f"""
         ROUND(AVG(price_vs_ath_pct), 2) AS avg_price_vs_ath_pct,
         COUNT(DISTINCT market_cap_category) AS cap_categories
     FROM {DESTINATION_TABLE}
+    WHERE is_current = true
     GROUP BY ingestion_date
     ORDER BY ingestion_date DESC
+""").show()
+
+# History: total versions per coin confirms SCD Type 2 is accumulating correctly
+print("=== Version history per coin (top 10 by versions) ===")
+spark.sql(f"""
+    SELECT id, name, COUNT(*) AS versions,
+           MIN(valid_from) AS first_seen,
+           MAX(valid_from) AS last_seen
+    FROM {DESTINATION_TABLE}
+    GROUP BY id, name
+    ORDER BY versions DESC
+    LIMIT 10
 """).show()
 
 
@@ -247,7 +308,3 @@ spark.sql(f"""
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
-
-# MARKDOWN ********************
-
-# ### 
