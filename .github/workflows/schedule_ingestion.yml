@@ -1,5 +1,5 @@
 
-# Triggers the Fabric orchestration pipeline daily at 6am UTC in both DEV and PRD.
+# Triggers the Fabric orchestration pipeline daily at 6am UTC in DEV, QA and PRD.
 # Keeps Bronze -> Silver -> Gold data fresh without manual intervention.
 name: Schedule - Daily Data Ingestion
 
@@ -28,6 +28,14 @@ jobs:
         run: |
           curl -s -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_DEV }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID }}/jobs/instances?jobType=Pipeline" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}"
+
+      - name: Trigger QA orchestration pipeline
+        run: |
+          curl -s -X POST \
+            "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_QA }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_QA }}/jobs/instances?jobType=Pipeline" \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "Content-Type: application/json" \
             -w "\nHTTP Status: %{http_code}"
