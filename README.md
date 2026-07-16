@@ -4,7 +4,7 @@
 [![CD Deploy](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/cd_deploy.yml)
 [![Scheduled Ingestion](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml/badge.svg)](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse/actions/workflows/schedule_ingestion.yml)
 
-End-to-end Data Engineering project on **Microsoft Fabric** implementing the **Medallion Architecture** (Bronze / Silver / Gold) with automated CI/CD via GitHub Actions.
+End-to-end Data Engineering project on **Microsoft Fabric** implementing the **Medallion Architecture** (Bronze / Silver / Gold) with enterprise-grade CI/CD via GitHub Actions and the Fabric REST API.
 
 Data source: [CoinGecko Public API](https://www.coingecko.com/en/api) — top 100 cryptocurrencies by market cap, ingested daily.
 
@@ -48,46 +48,71 @@ flowchart LR
 | Storage | OneLake (Delta Lake) |
 | Processing | PySpark (Spark 3.x) |
 | Orchestration | Fabric Data Pipeline |
-| Semantic Layer | Power BI Semantic Model |
-| Reporting | Power BI Report |
+| Semantic Layer | Power BI Semantic Model (DirectLake) |
+| Reporting | Power BI Report (PBIR format) |
 | CI/CD | GitHub Actions |
 | Auth | Azure AD Service Principal |
-| Deployment | Fabric Deployment Pipeline (DEV → PRD) |
+| Deployment | Fabric REST API (direct, 3-phase) |
 
 ---
 
 ## Environments
 
+Three isolated workspaces map 1:1 to Git branches:
+
 ```
-lakehouses_dev  (branch: dev)      lakehouses_prd  (branch: main)
-├── lh_bronze                      ├── lh_bronze
-├── lh_silver                      ├── lh_silver
-└── lh_gold                        └── lh_gold
+dev branch  →  lakehouses_dev   (development)
+qa branch   →  lakehouses_qa    (validation)
+main branch →  lakehouses_prd   (production)
 ```
 
-Promotion from DEV to PRD is managed by the **Fabric Deployment Pipeline** (`pipeline-medallion`), triggered automatically when a pull request is merged into `main`.
+Each workspace contains its own `lh_bronze`, `lh_silver`, and `lh_gold` Lakehouses. Environment-specific GUIDs (OneLake URLs, workspace IDs) are managed in `config/valueSets/`.
 
 ---
 
 ## CI/CD Pipeline
 
 ```mermaid
-flowchart LR
-    PR["Pull Request\ndev → main"] -->|"merge"| Main["main branch"]
-    Main -->|"cd_deploy.yml"| Deploy["Fabric Deployment\nPipeline API"]
-    Deploy -->|"promote"| PRD["PRD Workspace\nlakehouses_prd"]
+flowchart TD
+    Dev["push to dev"] -->|"cd_deploy.yml\nselective mode"| DEV["lakehouses_dev"]
+    QA["push to qa"] -->|"cd_deploy.yml\nselective mode"| QAW["lakehouses_qa"]
+    Main["push to main"] -->|"cd_deploy.yml\nselective mode"| PRD["lakehouses_prd"]
+
+    Cron["Daily 06:00 UTC"] -->|"schedule_ingestion.yml"| All["DEV + QA + PRD\npl_medallion_orchestration"]
 
     Push["Any push"] -->|"ci.yml"| CI["Validate\nArtifacts Exist"]
-    Cron["Daily 06:00 UTC"] -->|"schedule_ingestion.yml"| Ingest["Trigger\npl_medallion_orchestration"]
 ```
+
+### Deploy Strategy
+
+Artifacts are deployed directly to Fabric workspaces via the **Fabric REST API** — no Git Integration, no native Deployment Pipeline. This approach gives full programmatic control over every deployment step.
+
+**Selective mode** (default): only artifacts changed since the last commit are deployed, minimising API calls and deploy time.  
+**Full mode**: all artifacts are deployed, used for first-time environment setup via `workflow_dispatch`.
+
+### 3-Phase Deploy Order
+
+Dependencies between Fabric items require a strict deployment sequence:
+
+| Phase | Items | Why |
+|-------|-------|-----|
+| **1** | Notebooks + Semantic Model | No cross-item dependencies |
+| **2** | Data Pipeline | References notebooks by workspace item ID — patched after Phase 1 |
+| **3** | Report | References Semantic Model via XMLA connection string — patched after Phase 1 |
+
+**Pipeline patching**: `pipeline-content.json` stores notebook references as `.platform` `logicalId` values (Git-safe). The deploy script resolves these to actual workspace item IDs after Phase 1 completes.
+
+**Report patching**: `definition.pbir` uses `byPath` in the repository (for readability). The deploy script converts it to `byConnection` with a Power BI XMLA endpoint connection string including the `semanticModelId` of the deployed model.
+
+**DirectLake patching**: `expressions.tmdl` contains the DEV OneLake URL. The deploy script replaces it with the target environment URL before uploading.
 
 ### Workflows
 
 | File | Trigger | Purpose |
 |------|---------|---------|
-| `ci.yml` | Every push | Validates all 6 Fabric artifacts exist in the repository |
-| `cd_deploy.yml` | Push to `main` | Calls Fabric Deployment Pipeline API to promote DEV → PRD |
-| `schedule_ingestion.yml` | Daily at 06:00 UTC | Triggers `pl_medallion_orchestration` via Fabric REST API |
+| `ci.yml` | Every push | Validates all Fabric artifacts exist in the repository |
+| `cd_deploy.yml` | Push to `dev`, `qa`, `main` | Deploys changed artifacts to the matching workspace via REST API |
+| `schedule_ingestion.yml` | Daily at 06:00 UTC | Triggers `pl_medallion_orchestration` in DEV, QA, and PRD |
 
 ---
 
@@ -111,19 +136,38 @@ microsoft-fabric-medallion-lakehouse/
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                          # Artifact validation
-│       ├── cd_deploy.yml                   # DEV → PRD deployment
-│       └── schedule_ingestion.yml          # Daily ingestion trigger
+│       ├── ci.yml                    # Artifact validation
+│       ├── cd_deploy.yml             # Enterprise deploy via Fabric REST API
+│       ├── cd_deploy_legacy.yml      # Archived: Deployment Pipeline approach
+│       └── schedule_ingestion.yml    # Daily ingestion trigger (DEV + QA + PRD)
 │
-├── nb_bronze_coingecko_ingestion.Notebook/ # Bronze: API → Delta Table
-├── nb_silver_crypto_transform.Notebook/   # Silver: Clean + Enrich
-├── nb_gold_crypto_model.Notebook/         # Gold: Star Schema
+├── config/
+│   └── valueSets/
+│       ├── dev.json                  # DEV workspace ID + OneLake URL
+│       ├── qa.json                   # QA workspace ID + OneLake URL
+│       └── main.json                 # PRD workspace ID + OneLake URL
 │
-├── pl_medallion_orchestration.DataPipeline/ # Orchestrates Bronze→Silver→Gold
+├── scripts/
+│   ├── deploy.py                     # 3-phase deploy orchestration
+│   ├── fabric_client.py              # Fabric REST API wrapper
+│   └── utils.py                      # Artifact helpers: patch, encode, diff
 │
-├── sm_crypto_medallion.SemanticModel/     # Power BI Semantic Model
-├── rpt_crypto_dashboard.Report/          # Power BI Dashboard
+├── notebooks/
+│   ├── nb_bronze_coingecko_ingestion.Notebook/
+│   ├── nb_bronze_governance_fabric.Notebook/
+│   ├── nb_silver_crypto_transform.Notebook/
+│   └── nb_gold_crypto_model.Notebook/
 │
+├── pipelines/
+│   └── pl_medallion_orchestration.DataPipeline/
+│
+├── semantic models/
+│   └── sm_crypto_medallion.SemanticModel/
+│
+├── report/
+│   └── rpt_crypto_dashboard .Report/
+│
+├── requirements.txt
 └── README.md
 ```
 
@@ -134,36 +178,43 @@ microsoft-fabric-medallion-lakehouse/
 ### Prerequisites
 
 - Microsoft Fabric capacity (F2 or higher)
-- Azure AD Service Principal with Contributor access to both workspaces
+- Azure AD Service Principal with Member access to all three workspaces
 - GitHub repository with Actions enabled
 
 ### Required GitHub Secrets
 
 | Secret | Description |
 |--------|-------------|
-| `AZURE_CLIENT_ID` | Service Principal Application (Client) ID |
 | `AZURE_TENANT_ID` | Azure AD Tenant ID |
-| `AZURE_CLIENT_SECRET` | Service Principal Client Secret |
+| `AZURE_CLIENT_ID` | Service Principal Application (Client) ID |
+| `AZURE_CLIENT_SECRET` | Service Principal Client Secret (Value, not ID) |
 | `FABRIC_WORKSPACE_ID_DEV` | DEV workspace GUID |
-| `FABRIC_DEPLOYMENT_PIPELINE_ID` | Fabric Deployment Pipeline GUID |
-| `FABRIC_PIPELINE_ID` | `pl_medallion_orchestration` item GUID |
+| `FABRIC_WORKSPACE_ID_QA` | QA workspace GUID |
+| `FABRIC_WORKSPACE_ID_PRD` | PRD workspace GUID |
+| `FABRIC_PIPELINE_ID` | `pl_medallion_orchestration` item GUID in DEV |
+| `FABRIC_PIPELINE_ID_QA` | `pl_medallion_orchestration` item GUID in QA |
+| `FABRIC_PIPELINE_ID_PRD` | `pl_medallion_orchestration` item GUID in PRD |
 
 ### Setup
 
 1. Fork this repository
-2. Create two Fabric workspaces: `lakehouses_dev` and `lakehouses_prd`
-3. Create one Lakehouse per layer in each workspace (`lh_bronze_*`, `lh_silver_*`, `lh_gold_*`)
-4. Configure Fabric Git Integration: `dev` branch → DEV workspace, `main` branch → PRD workspace
-5. Create a Fabric Deployment Pipeline linking both workspaces
-6. Register an Azure AD Service Principal and add it as a Contributor to both workspaces
-7. Add all required secrets to GitHub repository settings
-8. Push to `dev` branch — CI runs automatically; merge to `main` to trigger deployment
+2. Create three Fabric workspaces: `lakehouses_dev`, `lakehouses_qa`, `lakehouses_prd`
+3. Create `lh_bronze`, `lh_silver`, `lh_gold` in each workspace
+4. Register an Azure AD Service Principal and add it as a **Member** to all three workspaces
+5. Update `config/valueSets/dev.json`, `qa.json`, and `main.json` with your workspace and OneLake GUIDs
+6. Add all required secrets to GitHub repository settings
+7. Run the `CD - Deploy to Fabric` workflow in **full** mode for each environment to bootstrap
+8. Push to `dev` to trigger selective deploys automatically
 
 ---
 
 ## Key Design Decisions
 
-**Cross-lakehouse reads via ABFS paths** — Fabric does not support cross-lakehouse table references with `spark.read.table()`. Notebooks use `notebookutils.lakehouse.get()` to resolve ABFS paths dynamically, avoiding hardcoded paths and enabling portability across DEV and PRD.
+**Direct REST API deploy over native Deployment Pipeline** — Gives full programmatic control: selective deploys, environment-specific patching, and no dependency on Fabric's Git Integration. The same approach scales to any number of environments without portal configuration.
+
+**3-phase phased deploy** — Fabric items have runtime cross-references that are invisible at the file level. Deploying in dependency order (Notebooks → Pipeline → Report) and resolving IDs between phases avoids circular reference errors.
+
+**Cross-lakehouse reads via ABFS paths** — Fabric does not support cross-lakehouse table references with `spark.read.table()`. Notebooks use `notebookutils.lakehouse.get()` to resolve ABFS paths dynamically, enabling portability across environments.
 
 **Idempotent ingestion** — Each layer checks for existing `ingestion_date` records before writing, preventing duplicate data on pipeline reruns.
 
@@ -178,4 +229,4 @@ microsoft-fabric-medallion-lakehouse/
 
 ---
 
-*Built as a Data Engineering project to demonstrate end-to-end skills on the Microsoft Fabric platform.*
+*Built as a Data Engineering portfolio project to demonstrate end-to-end skills on the Microsoft Fabric platform.*
