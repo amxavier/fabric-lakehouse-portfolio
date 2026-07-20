@@ -1,5 +1,6 @@
 
-# Validates that all expected Fabric artifacts exist in the repository.
+# Validates that all expected Fabric artifacts exist in the repository
+# and runs Python tests against the Semantic Model and Report definitions.
 # Runs on every push to catch missing or misconfigured objects early.
 name: CI - Validate Fabric Artifacts
 
@@ -39,3 +40,14 @@ jobs:
           done
 
           echo "All artifacts validated successfully."
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Run Semantic Model and Report tests
+        run: pytest tests/ -v
