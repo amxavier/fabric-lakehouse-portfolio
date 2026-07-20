@@ -103,6 +103,14 @@ def main() -> None:
     if dev_url and target_url and dev_url != target_url:
         replacements[dev_url] = target_url
 
+    # notebook_replacements patches workspace/lakehouse IDs in notebook METADATA.
+    # Notebooks store DEV IDs in their .py METADATA block; without this patch
+    # Fabric fails to attach lakehouses when running notebooks in QA/PRD.
+    notebook_replacements: dict[str, str] = {}
+    dev_workspace_id = dev_config["workspace_id"]
+    if dev_workspace_id != workspace_id:
+        notebook_replacements[dev_workspace_id] = workspace_id
+
     # Determine artifact set
     if mode == "full":
         items = _all_artifacts()
@@ -129,6 +137,16 @@ def main() -> None:
         client_secret=os.environ["AZURE_CLIENT_SECRET"],
     )
 
+    # Resolve lakehouse ID replacements for notebook METADATA by comparing
+    # DEV vs target workspace items — avoids hardcoding IDs in config.
+    if notebook_replacements:
+        dev_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(dev_workspace_id) if i.get("type") == "Lakehouse"}
+        target_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id) if i.get("type") == "Lakehouse"}
+        for lh_name in ["lh_bronze", "lh_silver", "lh_gold"]:
+            if lh_name in dev_items and lh_name in target_items:
+                notebook_replacements[dev_items[lh_name]] = target_items[lh_name]
+        print(f"Notebook lakehouse ID map: {len(notebook_replacements) - 1} lakehouses resolved\n")
+
     # Split into three phases based on dependency order
     phase1 = [p for p in deployable if not p.name.endswith((".DataPipeline", ".Report"))]
     phase2 = [p for p in deployable if p.name.endswith(".DataPipeline")]
@@ -141,7 +159,11 @@ def main() -> None:
         print("── Phase 1: Notebooks + SemanticModel ──")
     for item_path in phase1:
         existing = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id)}
-        parts = read_item_parts(item_path, replacements or None)
+        parts = read_item_parts(
+            item_path,
+            replacements or None,
+            notebook_replacements or None,
+        )
         if _deploy_item(client, workspace_id, existing, item_path, parts):
             success += 1
         else:
