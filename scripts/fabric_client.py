@@ -95,6 +95,20 @@ class FabricClient:
             return
         resp.raise_for_status()
 
+    def get_item_definition(self, workspace_id: str, item_id: str) -> list[dict]:
+        resp = requests.post(
+            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition",
+            headers=self._headers(),
+            timeout=60,
+        )
+        if resp.status_code == 202:
+            self._poll(resp.headers["Location"])
+            resp = requests.get(resp.headers["Location"], headers=self._headers(), timeout=30)
+            resp.raise_for_status()
+            return resp.json().get("definition", {}).get("parts", [])
+        resp.raise_for_status()
+        return resp.json().get("definition", {}).get("parts", [])
+
     def update_item_definition(
         self,
         workspace_id: str,
