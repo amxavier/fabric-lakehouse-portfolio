@@ -102,8 +102,17 @@ def get_notebook_logicalid_map(repo_root: Path) -> dict[str, str]:
     return mapping
 
 
-def patch_pipeline_notebook_ids(parts: list[dict], logicalid_to_itemid: dict[str, str]) -> list[dict]:
-    """Replace notebook logicalIds in pipeline-content.json with actual workspace item IDs."""
+def patch_pipeline_notebook_ids(
+    parts: list[dict],
+    logicalid_to_itemid: dict[str, str],
+    workspace_id: str | None = None,
+) -> list[dict]:
+    """Replace notebook logicalIds and workspaceId in pipeline-content.json with target workspace values.
+
+    workspaceId "00000000..." works in the workspace where the pipeline was natively created,
+    but fails with BadRequest when the pipeline is deployed via REST API to a different workspace.
+    Setting it to the actual workspace ID fixes cross-environment execution.
+    """
     patched = []
     for part in parts:
         if part["path"] == "pipeline-content.json":
@@ -111,9 +120,12 @@ def patch_pipeline_notebook_ids(parts: list[dict], logicalid_to_itemid: dict[str
             content = json.loads(raw.decode("utf-8"))
             for activity in content.get("properties", {}).get("activities", []):
                 if activity.get("type") == "TridentNotebook":
-                    logical_id = activity["typeProperties"].get("notebookId", "")
+                    props = activity["typeProperties"]
+                    logical_id = props.get("notebookId", "")
                     if logical_id in logicalid_to_itemid:
-                        activity["typeProperties"]["notebookId"] = logicalid_to_itemid[logical_id]
+                        props["notebookId"] = logicalid_to_itemid[logical_id]
+                    if workspace_id:
+                        props["workspaceId"] = workspace_id
             updated = json.dumps(content, indent=2).encode("utf-8")
             patched.append({
                 "path": part["path"],

@@ -184,7 +184,7 @@ def main() -> None:
 
         for item_path in phase2:
             parts = read_item_parts(item_path, replacements or None)
-            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid)
+            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id)
             if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                 success += 1
             else:
