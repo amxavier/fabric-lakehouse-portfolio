@@ -12,8 +12,9 @@ ITEM_TYPE_MAP = {
 
 ARTIFACT_SUFFIXES = tuple(ITEM_TYPE_MAP.keys())
 
-# Only .tmdl files carry environment-specific GUIDs (DirectLake expressions)
-_REPLACEABLE_EXTENSIONS = {".tmdl"}
+# .tmdl files carry DirectLake OneLake URLs; .py files carry notebook lakehouse IDs in METADATA
+_TMDL_EXTENSIONS = {".tmdl"}
+_NOTEBOOK_EXTENSIONS = {".py"}
 
 
 def get_item_type(folder_name: str) -> str | None:
@@ -53,16 +54,26 @@ def get_changed_items(repo_root: Path, depth: int = 1) -> list[Path]:
     return list(items)
 
 
-def read_item_parts(item_path: Path, replacements: dict[str, str] | None = None) -> list[dict]:
+def read_item_parts(
+    item_path: Path,
+    replacements: dict[str, str] | None = None,
+    notebook_replacements: dict[str, str] | None = None,
+) -> list[dict]:
     parts = []
     for file_path in sorted(item_path.rglob("*")):
         if file_path.is_dir():
             continue
         relative = file_path.relative_to(item_path).as_posix()
         raw = file_path.read_bytes()
-        if replacements and file_path.suffix in _REPLACEABLE_EXTENSIONS:
+        if replacements and file_path.suffix in _TMDL_EXTENSIONS:
             text = raw.decode("utf-8")
             for old, new in replacements.items():
+                text = text.replace(old, new)
+            raw = text.encode("utf-8")
+        elif notebook_replacements and file_path.suffix in _NOTEBOOK_EXTENSIONS:
+            # Patch notebook METADATA: replace DEV workspace/lakehouse IDs with target IDs
+            text = raw.decode("utf-8")
+            for old, new in notebook_replacements.items():
                 text = text.replace(old, new)
             raw = text.encode("utf-8")
         parts.append({
