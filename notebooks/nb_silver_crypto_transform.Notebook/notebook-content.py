@@ -52,12 +52,18 @@ from pyspark.sql.types import DateType
 from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
-# Use Spark catalog table access — lh_bronze is mounted via known_lakehouses,
-# avoiding ABFSS path construction which varies between Fabric environments.
-SOURCE_PATH = "lh_bronze.raw_crypto_prices"
+SOURCE_TABLE      = "lh_bronze.raw_crypto_prices"
 DESTINATION_TABLE = "silver_crypto_prices"
 
-print(f"Source path: {SOURCE_PATH}")
+# Resolve Silver ABFSS path explicitly so writes and existence checks bypass
+# the Spark catalog, which can return stale results after a manual table delete.
+_lh_silver = notebookutils.lakehouse.get("lh_silver")
+SILVER_ABFS = _lh_silver["properties"]["abfsPath"]
+SILVER_PATH = f"{SILVER_ABFS}/Tables/{DESTINATION_TABLE}"
+
+print(f"[Silver] lh_silver id : {_lh_silver['id']}")
+print(f"[Silver] ABFS base    : {SILVER_ABFS}")
+print(f"[Silver] Write path   : {SILVER_PATH}")
 
 
 # METADATA ********************
@@ -75,11 +81,16 @@ print(f"Source path: {SOURCE_PATH}")
 
 # Skip dates already present in Silver (checked against valid_from, which equals
 # ingestion_date for the version inserted on that day).
-df_bronze = spark.read.table(SOURCE_PATH)
+# Use DeltaTable.isDeltaTable to check existence — avoids stale Spark catalog entries
+# that can occur after a manual table delete via Fabric UI.
+df_bronze = spark.read.table(SOURCE_TABLE)
 
-if spark.catalog.tableExists(DESTINATION_TABLE):
+silver_exists = DeltaTable.isDeltaTable(spark, SILVER_PATH)
+print(f"[Silver] Table exists at path: {silver_exists}")
+
+if silver_exists:
     processed_dates = (
-        spark.read.table(DESTINATION_TABLE)
+        spark.read.format("delta").load(SILVER_PATH)
         .select(F.col("valid_from").alias("ingestion_date"))
         .distinct()
     )
@@ -230,19 +241,18 @@ df_scd = (
 
 # CELL ********************
 
-if not spark.catalog.tableExists(DESTINATION_TABLE):
-    # Initial load — no previous versions to expire
+if not DeltaTable.isDeltaTable(spark, SILVER_PATH):
+    # Initial load — write to explicit ABFSS path, bypassing catalog.
     (df_scd.write
         .format("delta")
         .mode("overwrite")
         .option("mergeSchema", "true")
-        .saveAsTable(DESTINATION_TABLE))
-    print(f"{df_scd.count()} records written (initial load)")
+        .save(SILVER_PATH))
+    print(f"{df_scd.count()} records written to {SILVER_PATH} (initial load)")
 else:
-    dt = DeltaTable.forName(spark, DESTINATION_TABLE)
+    dt = DeltaTable.forPath(spark, SILVER_PATH)
 
     # Step 1 — Expire the current row for every coin that has a new version incoming.
-    # Sets valid_to = today's ingestion_date and flips is_current to False.
     dt.alias("target").merge(
         df_scd.alias("source"),
         "target.id = source.id AND target.is_current = true"
@@ -256,9 +266,9 @@ else:
         .format("delta")
         .mode("append")
         .option("mergeSchema", "true")
-        .saveAsTable(DESTINATION_TABLE))
+        .save(SILVER_PATH))
 
-    print(f"{df_scd.count()} new versions written")
+    print(f"{df_scd.count()} new versions written to {SILVER_PATH}")
 
 
 # METADATA ********************
@@ -274,16 +284,20 @@ else:
 
 # CELL ********************
 
+# Read from explicit path for validation — avoids catalog dependency.
+df_val = spark.read.format("delta").load(SILVER_PATH)
+df_val.createOrReplaceTempView("silver_val")
+
 # Current snapshot: one row per coin with is_current = True
 print("=== Current snapshot (is_current = True) ===")
-spark.sql(f"""
+spark.sql("""
     SELECT
         ingestion_date,
         COUNT(*)                        AS total_coins,
         ROUND(SUM(market_cap) / 1e9, 2) AS total_market_cap_usd_bn,
         ROUND(AVG(price_vs_ath_pct), 2) AS avg_price_vs_ath_pct,
         COUNT(DISTINCT market_cap_category) AS cap_categories
-    FROM {DESTINATION_TABLE}
+    FROM silver_val
     WHERE is_current = true
     GROUP BY ingestion_date
     ORDER BY ingestion_date DESC
@@ -291,11 +305,11 @@ spark.sql(f"""
 
 # History: total versions per coin confirms SCD Type 2 is accumulating correctly
 print("=== Version history per coin (top 10 by versions) ===")
-spark.sql(f"""
+spark.sql("""
     SELECT id, name, COUNT(*) AS versions,
            MIN(valid_from) AS first_seen,
            MAX(valid_from) AS last_seen
-    FROM {DESTINATION_TABLE}
+    FROM silver_val
     GROUP BY id, name
     ORDER BY versions DESC
     LIMIT 10

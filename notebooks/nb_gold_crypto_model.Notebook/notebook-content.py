@@ -56,11 +56,13 @@ DIM_COIN  = "dim_coin"
 DIM_DATE  = "dim_date"
 FACT_TABLE = "fact_prices"
 
-# Use Spark catalog table access — lh_silver is mounted via known_lakehouses,
-# avoiding ABFSS path construction which varies between Fabric environments.
-SOURCE_TABLE = "lh_silver.silver_crypto_prices"
+# Resolve Silver ABFSS path — same convention Silver uses to write, ensuring
+# Gold reads from the exact same OneLake location regardless of catalog state.
+_lh_silver = notebookutils.lakehouse.get("lh_silver")
+SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_crypto_prices"
 
-print(f"Source: {SOURCE_TABLE}")
+print(f"[Gold] lh_silver id : {_lh_silver['id']}")
+print(f"[Gold] Source path  : {SILVER_PATH}")
 
 
 # METADATA ********************
@@ -78,7 +80,7 @@ print(f"Source: {SOURCE_TABLE}")
 
 # Read the full Silver table — Gold rebuilds dimensions via SCD Type 1 (overwrite
 # latest attributes) and appends only new dates to the fact table.
-df_silver = spark.read.table(SOURCE_TABLE)
+df_silver = spark.read.format("delta").load(SILVER_PATH)
 
 print(f"Silver records loaded: {df_silver.count()}")
 df_silver.printSchema()
