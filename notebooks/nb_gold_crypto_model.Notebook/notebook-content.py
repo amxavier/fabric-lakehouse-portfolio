@@ -55,7 +55,7 @@ from delta.tables import DeltaTable
 # Resolve Silver lakehouse ABFS path to read across lakehouses reliably.
 silver_abfs = notebookutils.lakehouse.get("lh_silver")["properties"]["abfsPath"]
 
-SOURCE_PATH = f"{silver_abfs}/Tables/dbo/silver_crypto_prices"
+SOURCE_PATH = f"{silver_abfs}/Tables/silver_crypto_prices"
 
 DIM_COIN  = "dim_coin"
 DIM_DATE  = "dim_date"

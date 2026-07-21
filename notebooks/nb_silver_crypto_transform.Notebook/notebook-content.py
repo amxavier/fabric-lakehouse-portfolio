@@ -54,7 +54,7 @@ from delta.tables import DeltaTable
 
 bronze_abfs = notebookutils.lakehouse.get("lh_bronze")["properties"]["abfsPath"]
 
-SOURCE_PATH       = f"{bronze_abfs}/Tables/dbo/raw_crypto_prices"
+SOURCE_PATH       = f"{bronze_abfs}/Tables/raw_crypto_prices"
 DESTINATION_TABLE = "silver_crypto_prices"
 
 print(f"Source path: {SOURCE_PATH}")
