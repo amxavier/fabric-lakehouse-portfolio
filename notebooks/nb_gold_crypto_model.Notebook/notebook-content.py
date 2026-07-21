@@ -191,7 +191,7 @@ print(f"dim_date: {df_dim_date.count()} dates loaded")
 # fact_prices is the central fact table — one row per coin per day.
 # It references dim_coin and dim_date via surrogate keys (coin_id, date_id),
 # and contains all numeric metrics used in Power BI measures.
-df_dim_date_keys = spark.read.table(f"dbo.{DIM_DATE}").select("ingestion_date", "date_id")
+df_dim_date_keys = spark.read.table(DIM_DATE).select("ingestion_date", "date_id")
 
 df_fact = (
     df_silver
@@ -218,7 +218,7 @@ df_fact = (
 # Append only new dates not yet in the fact table.
 if spark.catalog.tableExists(FACT_TABLE):
     processed_dates = (
-        spark.read.table(f"dbo.{FACT_TABLE}")
+        spark.read.table(FACT_TABLE)
         .select("ingestion_date").distinct()
     )
     df_fact_new = df_fact.join(processed_dates, on="ingestion_date", how="left_anti")
@@ -259,9 +259,9 @@ spark.sql(f"""
         ROUND(SUM(f.market_cap) / 1e9, 2)       AS market_cap_usd_bn,
         ROUND(AVG(f.price_vs_ath_pct), 2)        AS avg_vs_ath_pct,
         ROUND(AVG(f.market_dominance_pct), 4)    AS avg_dominance_pct
-    FROM dbo.{FACT_TABLE}     f
-    JOIN dbo.{DIM_COIN}       d  ON f.coin_id = d.coin_id
-    JOIN dbo.{DIM_DATE}       dd ON f.date_id = dd.date_id
+    FROM {FACT_TABLE}     f
+    JOIN {DIM_COIN}       d  ON f.coin_id = d.coin_id
+    JOIN {DIM_DATE}       dd ON f.date_id = dd.date_id
     GROUP BY f.ingestion_date, dd.year, dd.month_name
     ORDER BY f.ingestion_date DESC
 """).show()
