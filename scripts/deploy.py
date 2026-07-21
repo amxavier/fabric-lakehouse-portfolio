@@ -14,6 +14,8 @@ Optional:
   DEPLOY_MODE       — "selective" | "full" (default: selective)
   GITHUB_REF_NAME   — branch name, injected by GitHub Actions
 """
+import base64
+import json
 import os
 import subprocess
 import sys
@@ -185,6 +187,13 @@ def main() -> None:
         for item_path in phase2:
             parts = read_item_parts(item_path, replacements or None)
             parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id)
+            # Debug: confirm what is being sent to Fabric
+            for p in parts:
+                if p["path"] == "pipeline-content.json":
+                    sent = json.loads(base64.b64decode(p["payload"]))
+                    for act in sent.get("properties", {}).get("activities", []):
+                        tp = act.get("typeProperties", {})
+                        print(f"  [PATCH] {act['name']}: notebookId={tp.get('notebookId')} workspaceId={tp.get('workspaceId')}")
             if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                 success += 1
             else:
