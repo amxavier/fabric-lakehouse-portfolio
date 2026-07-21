@@ -52,9 +52,9 @@ from pyspark.sql.types import DateType
 from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
-bronze_abfs = notebookutils.lakehouse.get("lh_bronze")["properties"]["abfsPath"]
-
-SOURCE_PATH       = f"{bronze_abfs}/Tables/raw_crypto_prices"
+# Use Spark catalog table access — lh_bronze is mounted via known_lakehouses,
+# avoiding ABFSS path construction which varies between Fabric environments.
+SOURCE_PATH = "lh_bronze.raw_crypto_prices"
 DESTINATION_TABLE = "silver_crypto_prices"
 
 print(f"Source path: {SOURCE_PATH}")
@@ -75,7 +75,7 @@ print(f"Source path: {SOURCE_PATH}")
 
 # Skip dates already present in Silver (checked against valid_from, which equals
 # ingestion_date for the version inserted on that day).
-df_bronze = spark.read.format("delta").load(SOURCE_PATH)
+df_bronze = spark.read.table(SOURCE_PATH)
 
 if spark.catalog.tableExists(DESTINATION_TABLE):
     processed_dates = (
