@@ -52,16 +52,17 @@ from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
-# Resolve Silver lakehouse ABFS path to read across lakehouses reliably.
-silver_abfs = notebookutils.lakehouse.get("lh_silver")["properties"]["abfsPath"]
-
-SOURCE_PATH = f"{silver_abfs}/Tables/dbo/silver_crypto_prices"
-
 DIM_COIN  = "dim_coin"
 DIM_DATE  = "dim_date"
 FACT_TABLE = "fact_prices"
 
-print(f"Source: {SOURCE_PATH}")
+# Resolve Silver ABFSS path — same convention Silver uses to write, ensuring
+# Gold reads from the exact same OneLake location regardless of catalog state.
+_lh_silver = notebookutils.lakehouse.get("lh_silver")
+SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_crypto_prices"
+
+print(f"[Gold] lh_silver id : {_lh_silver['id']}")
+print(f"[Gold] Source path  : {SILVER_PATH}")
 
 
 # METADATA ********************
@@ -79,7 +80,7 @@ print(f"Source: {SOURCE_PATH}")
 
 # Read the full Silver table — Gold rebuilds dimensions via SCD Type 1 (overwrite
 # latest attributes) and appends only new dates to the fact table.
-df_silver = spark.read.format("delta").load(SOURCE_PATH)
+df_silver = spark.read.format("delta").load(SILVER_PATH)
 
 print(f"Silver records loaded: {df_silver.count()}")
 df_silver.printSchema()
