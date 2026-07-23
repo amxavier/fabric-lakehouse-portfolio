@@ -40,7 +40,16 @@ def main() -> None:
     print(f"Report ID: {report_id}")
     print("Fetching definition...")
 
-    parts = client.get_item_definition(workspace_id, report_id, fmt="PBIR-Legacy")
+    raw = client.get_item_definition_raw(workspace_id, report_id, fmt="PBIR-Legacy")
+    print(f"\nRAW response (first 2000 chars):\n{raw[:2000]}\n")
+
+    import json as _json
+    data = _json.loads(raw)
+    parts = (
+        data.get("parts")
+        or data.get("definition", {}).get("parts")
+        or []
+    )
 
     for part in parts:
         path = part["path"]

@@ -95,6 +95,21 @@ class FabricClient:
             return
         resp.raise_for_status()
 
+    def get_item_definition_raw(self, workspace_id: str, item_id: str, fmt: str | None = None) -> str:
+        url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if fmt:
+            url += f"?format={fmt}"
+        resp = requests.post(url, headers=self._headers(), json={}, timeout=60)
+        print(f"  getDefinition status: {resp.status_code}")
+        if resp.status_code == 202:
+            location = resp.headers["Location"]
+            self._poll(location)
+            resp = requests.get(location, headers=self._headers(), timeout=30)
+            resp.raise_for_status()
+        else:
+            resp.raise_for_status()
+        return resp.text
+
     def get_item_definition(self, workspace_id: str, item_id: str, fmt: str | None = None) -> list[dict]:
         url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
         if fmt:
