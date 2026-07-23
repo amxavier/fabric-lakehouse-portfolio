@@ -109,6 +109,14 @@ class FabricClient:
         resp.raise_for_status()
         return resp.json().get("definition", {}).get("parts", [])
 
+    def delete_item(self, workspace_id: str, item_id: str) -> None:
+        resp = requests.delete(
+            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}",
+            headers=self._headers(),
+            timeout=30,
+        )
+        resp.raise_for_status()
+
     def update_item_definition(
         self,
         workspace_id: str,
