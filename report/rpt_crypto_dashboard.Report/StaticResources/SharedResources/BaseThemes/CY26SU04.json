@@ -1015,6 +1015,7 @@
         ],
         "background": [
           {
+            "show": true,
             "color": {
               "solid": {
                 "color": "#080E1A"
