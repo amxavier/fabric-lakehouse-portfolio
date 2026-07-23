@@ -40,7 +40,7 @@ def main() -> None:
     print(f"Report ID: {report_id}")
     print("Fetching definition...")
 
-    parts = client.get_item_definition(workspace_id, report_id, fmt="PBIR")
+    parts = client.get_item_definition(workspace_id, report_id, fmt="PBIR-Legacy")
 
     for part in parts:
         path = part["path"]
