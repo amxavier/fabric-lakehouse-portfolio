@@ -121,16 +121,13 @@ class FabricClient:
         url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
         if fmt:
             url += f"?format={fmt}"
-        resp = requests.post(
-            url,
-            headers=self._headers(),
-            timeout=60,
-        )
+        resp = requests.post(url, headers=self._headers(), json={}, timeout=60)
         if resp.status_code == 202:
-            self._poll(resp.headers["Location"])
-            resp = requests.get(resp.headers["Location"], headers=self._headers(), timeout=30)
-            resp.raise_for_status()
-            return resp.json().get("definition", {}).get("parts", [])
+            location = resp.headers["Location"]
+            self._poll(location)
+            result = requests.get(location + "/result", headers=self._headers(), timeout=30)
+            result.raise_for_status()
+            return result.json().get("definition", {}).get("parts", [])
         resp.raise_for_status()
         return resp.json().get("definition", {}).get("parts", [])
 

@@ -27,15 +27,6 @@
       "name": "b17497d184109670e075",
       "visualContainers": [
         {
-          "config": "{\"name\":\"bg_canvas_rect\",\"layouts\":[{\"id\":0,\"position\":{\"x\":0,\"y\":0,\"z\":0,\"width\":1280,\"height\":720,\"tabOrder\":0}}],\"singleVisual\":{\"visualType\":\"basicShape\",\"objects\":{\"line\":[{\"properties\":{\"transparency\":{\"expr\":{\"Literal\":{\"Value\":\"100D\"}}},\"weight\":{\"expr\":{\"Literal\":{\"Value\":\"0D\"}}},\"lineColor\":{\"solid\":{\"color\":\"#080E1A\"}}}}],\"fill\":[{\"properties\":{\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}},\"fillColor\":{\"solid\":{\"color\":\"#080E1A\"}},\"transparency\":{\"expr\":{\"Literal\":{\"Value\":\"0D\"}}}}}]}}}",
-          "filters": "[]",
-          "height": 720.00,
-          "width": 1280.00,
-          "x": 0.00,
-          "y": 0.00,
-          "z": 0.00
-        },
-        {
           "config": "{\"name\":\"a0b1c2d3e4f5a6b7c8d9\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":10,\"z\":0,\"width\":200,\"height\":100,\"tabOrder\":0}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Total Market Cap (USD)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"},\"Name\":\"measure.Total Market Cap (USD)\",\"NativeReferenceName\":\"Total Market Cap (USD)\"}]},\"drillFilterOtherVisuals\":true}}",
           "filters": "[]",
           "height": 100.00,
