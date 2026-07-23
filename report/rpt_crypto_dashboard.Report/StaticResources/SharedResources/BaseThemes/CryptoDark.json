@@ -384,7 +384,12 @@
             "cellPadding": 12,
             "paddingIndividual": false,
             "paddingUniform": 12,
-            "backgroundShow": true
+            "backgroundShow": true,
+            "backgroundColor": {
+              "solid": {
+                "color": "#0F1928"
+              }
+            }
           }
         ],
         "overflow": [
@@ -696,6 +701,16 @@
         "legend": [
           {
             "showGradientLegend": true
+          }
+        ],
+        "plotArea": [
+          {
+            "transparency": 0,
+            "color": {
+              "solid": {
+                "color": "#0F1928"
+              }
+            }
           }
         ],
         "smallMultiplesLayout": [
