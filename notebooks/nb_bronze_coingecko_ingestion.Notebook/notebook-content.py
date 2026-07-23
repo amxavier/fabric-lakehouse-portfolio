@@ -52,6 +52,7 @@ from pyspark.sql.types import (
     StructType, StructField, StringType, DoubleType,
     LongType, IntegerType, TimestampType, DateType
 )
+from delta.tables import DeltaTable
 
 # CoinGecko public endpoint — no API key required for the markets endpoint.
 # We fetch the top 100 coins by market cap in USD, including 7d and 30d
@@ -186,8 +187,6 @@ df.printSchema()
 # does not produce duplicate records in the Bronze table.
 # We check for existing records with today's ingestion_date before writing,
 # which is a safer and simpler alternative to using MERGE for raw ingestion.
-from delta.tables import DeltaTable
-
 already_ingested = False
 
 # Use DeltaTable.isDeltaTable + direct ABFSS read to bypass Spark catalog,
