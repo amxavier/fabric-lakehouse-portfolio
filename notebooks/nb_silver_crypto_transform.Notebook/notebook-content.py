@@ -52,17 +52,19 @@ from pyspark.sql.types import DateType
 from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
-SOURCE_TABLE      = "lh_bronze.raw_crypto_prices"
 DESTINATION_TABLE = "silver_crypto_prices"
 
-# Resolve Silver ABFSS path explicitly so writes and existence checks bypass
-# the Spark catalog, which can return stale results after a manual table delete.
+# Resolve paths via notebookutils — bypasses Spark catalog entirely, so lakehouses
+# don't need to be registered as catalog databases in this session.
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
 _lh_silver = notebookutils.lakehouse.get("lh_silver")
+BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_crypto_prices"
 SILVER_ABFS = _lh_silver["properties"]["abfsPath"]
 SILVER_PATH = f"{SILVER_ABFS}/Tables/{DESTINATION_TABLE}"
 
+print(f"[Silver] lh_bronze id : {_lh_bronze['id']}")
+print(f"[Silver] Bronze path  : {BRONZE_PATH}")
 print(f"[Silver] lh_silver id : {_lh_silver['id']}")
-print(f"[Silver] ABFS base    : {SILVER_ABFS}")
 print(f"[Silver] Write path   : {SILVER_PATH}")
 
 
@@ -83,7 +85,7 @@ print(f"[Silver] Write path   : {SILVER_PATH}")
 # ingestion_date for the version inserted on that day).
 # Use DeltaTable.isDeltaTable to check existence — avoids stale Spark catalog entries
 # that can occur after a manual table delete via Fabric UI.
-df_bronze = spark.read.table(SOURCE_TABLE)
+df_bronze = spark.read.format("delta").load(BRONZE_PATH)
 
 silver_exists = DeltaTable.isDeltaTable(spark, SILVER_PATH)
 print(f"[Silver] Table exists at path: {silver_exists}")
