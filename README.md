@@ -191,7 +191,7 @@ microsoft-fabric-medallion-lakehouse/
 | `FABRIC_WORKSPACE_ID_DEV` | DEV workspace GUID |
 | `FABRIC_WORKSPACE_ID_QA` | QA workspace GUID |
 | `FABRIC_WORKSPACE_ID_PRD` | PRD workspace GUID |
-| `FABRIC_PIPELINE_ID` | `pl_medallion_orchestration` item GUID in DEV |
+| `FABRIC_PIPELINE_ID_DEV` | `pl_medallion_orchestration` item GUID in DEV |
 | `FABRIC_PIPELINE_ID_QA` | `pl_medallion_orchestration` item GUID in QA |
 | `FABRIC_PIPELINE_ID_PRD` | `pl_medallion_orchestration` item GUID in PRD |
 
@@ -214,7 +214,7 @@ microsoft-fabric-medallion-lakehouse/
 
 **3-phase phased deploy** — Fabric items have runtime cross-references that are invisible at the file level. Deploying in dependency order (Notebooks → Pipeline → Report) and resolving IDs between phases avoids circular reference errors.
 
-**Cross-lakehouse reads via ABFS paths** — Fabric does not support cross-lakehouse table references with `spark.read.table()`. Notebooks use `notebookutils.lakehouse.get()` to resolve ABFS paths dynamically, enabling portability across environments.
+**Cross-lakehouse reads via ABFS paths** — Notebooks deployed via REST API may not have the Spark catalog context needed to resolve cross-lakehouse table references. Notebooks use `notebookutils.lakehouse.get()` to resolve ABFS paths dynamically and `DeltaTable.isDeltaTable()` for existence checks, bypassing the catalog entirely and enabling reliable reads across environments.
 
 **Idempotent ingestion** — Each layer checks for existing `ingestion_date` records before writing, preventing duplicate data on pipeline reruns.
 

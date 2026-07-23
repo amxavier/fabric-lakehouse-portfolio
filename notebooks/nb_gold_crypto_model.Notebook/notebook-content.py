@@ -56,13 +56,17 @@ DIM_COIN  = "dim_coin"
 DIM_DATE  = "dim_date"
 FACT_TABLE = "fact_prices"
 
-# Resolve Silver ABFSS path — same convention Silver uses to write, ensuring
-# Gold reads from the exact same OneLake location regardless of catalog state.
+# Resolve ABFSS paths via notebookutils — bypasses Spark catalog entirely so
+# existence checks reflect the real filesystem, not a potentially stale catalog.
 _lh_silver = notebookutils.lakehouse.get("lh_silver")
+_lh_gold   = notebookutils.lakehouse.get("lh_gold")
 SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_crypto_prices"
+FACT_PATH   = f"{_lh_gold['properties']['abfsPath']}/Tables/{FACT_TABLE}"
 
 print(f"[Gold] lh_silver id : {_lh_silver['id']}")
+print(f"[Gold] lh_gold id   : {_lh_gold['id']}")
 print(f"[Gold] Source path  : {SILVER_PATH}")
+print(f"[Gold] Fact path    : {FACT_PATH}")
 
 
 # METADATA ********************
@@ -216,9 +220,11 @@ df_fact = (
 )
 
 # Append only new dates not yet in the fact table.
-if spark.catalog.tableExists(FACT_TABLE):
+# DeltaTable.isDeltaTable checks the filesystem directly — avoids stale catalog
+# entries that can persist after a manual table delete via the Fabric UI.
+if DeltaTable.isDeltaTable(spark, FACT_PATH):
     processed_dates = (
-        spark.read.table(FACT_TABLE)
+        spark.read.format("delta").load(FACT_PATH)
         .select("ingestion_date").distinct()
     )
     df_fact_new = df_fact.join(processed_dates, on="ingestion_date", how="left_anti")
