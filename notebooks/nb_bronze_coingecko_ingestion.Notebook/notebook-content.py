@@ -46,6 +46,7 @@
 # Standard library and PySpark imports needed for HTTP requests,
 # timestamp handling, schema definition, and DataFrame operations.
 import requests
+import pandas as pd
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
@@ -114,8 +115,6 @@ print(f"Records fetched: {len(data)}")
 # ### Define Schema and Build DataFrame
 
 # CELL ********************
-
-import pandas as pd
 
 # Explicit column selection and type mapping using pandas as an intermediary.
 # The CoinGecko API returns inconsistent numeric types across coins (e.g., an integer
