@@ -19,7 +19,7 @@
   ],
   "sections": [
     {
-      "config": "{\"background\":{\"color\":{\"solid\":{\"color\":\"#080E1A\"}},\"transparency\":0}}",
+      "config": "{}",
       "displayName": "crypto_overview",
       "displayOption": 1,
       "filters": "[]",

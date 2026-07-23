@@ -73,8 +73,16 @@ def _deploy_item(client: FabricClient, workspace_id: str, existing: dict[str, st
     item_type = get_item_type(item_path.name)
     try:
         if display_name in existing:
-            print(f"  Updating  [{item_type}] {display_name}")
-            client.update_item_definition(workspace_id, existing[display_name], parts)
+            if item_type == "Report":
+                # updateDefinition does not propagate layout changes for Reports;
+                # delete + create ensures the full PBIR definition (report.json, theme)
+                # is applied correctly every time.
+                print(f"  Recreating [{item_type}] {display_name}")
+                client.delete_item(workspace_id, existing[display_name])
+                client.create_item(workspace_id, display_name, item_type, parts)
+            else:
+                print(f"  Updating  [{item_type}] {display_name}")
+                client.update_item_definition(workspace_id, existing[display_name], parts)
         else:
             print(f"  Creating  [{item_type}] {display_name}")
             client.create_item(workspace_id, display_name, item_type, parts)
