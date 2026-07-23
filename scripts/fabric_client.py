@@ -103,11 +103,18 @@ class FabricClient:
         print(f"  getDefinition status: {resp.status_code}")
         if resp.status_code == 202:
             location = resp.headers["Location"]
+            print(f"  Location: {location}")
             self._poll(location)
-            resp = requests.get(location, headers=self._headers(), timeout=30)
-            resp.raise_for_status()
-        else:
-            resp.raise_for_status()
+            # Fabric LRO result lives at /result suffix, not the status URL itself
+            result_resp = requests.get(location + "/result", headers=self._headers(), timeout=30)
+            print(f"  /result status: {result_resp.status_code}")
+            if result_resp.status_code == 200:
+                return result_resp.text
+            # Fallback: try the operation URL itself
+            fallback = requests.get(location, headers=self._headers(), timeout=30)
+            fallback.raise_for_status()
+            return fallback.text
+        resp.raise_for_status()
         return resp.text
 
     def get_item_definition(self, workspace_id: str, item_id: str, fmt: str | None = None) -> list[dict]:
