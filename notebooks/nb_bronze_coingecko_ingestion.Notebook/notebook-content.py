@@ -60,6 +60,14 @@ COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
 TABLE_NAME    = "raw_crypto_prices"
 INGESTION_TS  = datetime.now(timezone.utc)
 
+# Resolve ABFSS path explicitly so writes bypass the Spark catalog session context,
+# which can point to the wrong lakehouse when the notebook is API-deployed.
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
+BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{TABLE_NAME}"
+
+print(f"[Bronze] lh_bronze id : {_lh_bronze['id']}")
+print(f"[Bronze] Write path   : {BRONZE_PATH}")
+
 PARAMS = {
     "vs_currency": "usd",
     "order": "market_cap_desc",
@@ -178,27 +186,32 @@ df.printSchema()
 # does not produce duplicate records in the Bronze table.
 # We check for existing records with today's ingestion_date before writing,
 # which is a safer and simpler alternative to using MERGE for raw ingestion.
+from delta.tables import DeltaTable
+
 already_ingested = False
 
-if spark.catalog.tableExists(TABLE_NAME):
-    count = spark.sql(f"""
-        SELECT COUNT(*) AS n FROM {TABLE_NAME}
-        WHERE ingestion_date = '{INGESTION_TS.date().isoformat()}'
-    """).collect()[0]["n"]
+# Use DeltaTable.isDeltaTable + direct ABFSS read to bypass Spark catalog,
+# which can resolve to the wrong lakehouse when the notebook is API-deployed.
+if DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    count = (
+        spark.read.format("delta").load(BRONZE_PATH)
+        .filter(F.col("ingestion_date") == str(INGESTION_TS.date()))
+        .count()
+    )
     already_ingested = count > 0
+
+print(f"[Bronze] Table exists at path: {DeltaTable.isDeltaTable(spark, BRONZE_PATH)}")
+print(f"[Bronze] Already ingested today: {already_ingested}")
 
 if already_ingested:
     print(f"Data for {INGESTION_TS.date()} already ingested. Skipping.")
 else:
-    # mergeSchema allows the table to evolve if CoinGecko adds new fields
-    # in the future, without breaking the pipeline.
     (df.write
         .format("delta")
         .mode("append")
         .option("mergeSchema", "true")
-        .saveAsTable(TABLE_NAME)
-    )
-    print(f"{df.count()} records written to '{TABLE_NAME}'")
+        .save(BRONZE_PATH))
+    print(f"{df.count()} records written to '{BRONZE_PATH}'")
 
 
 # METADATA ********************
@@ -216,12 +229,11 @@ else:
 
 # Quick row count per ingestion_date to confirm data landed correctly
 # and to spot any gaps or duplicate runs at a glance.
-spark.sql(f"""
-    SELECT ingestion_date, COUNT(*) AS total_records
-    FROM {TABLE_NAME}
-    GROUP BY ingestion_date
-    ORDER BY ingestion_date DESC
-""").show()
+(spark.read.format("delta").load(BRONZE_PATH)
+    .groupBy("ingestion_date")
+    .count()
+    .orderBy("ingestion_date", ascending=False)
+    .show())
 
 
 # METADATA ********************
