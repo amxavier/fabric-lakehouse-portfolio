@@ -19,13 +19,22 @@
   ],
   "sections": [
     {
-      "config": "{\"objects\":{\"background\":[{\"properties\":{\"color\":{\"solid\":{\"color\":\"#080E1A\"}},\"transparency\":0,\"show\":true}}]}}",
+      "config": "{}",
       "displayName": "crypto_overview",
       "displayOption": 1,
       "filters": "[]",
       "height": 720.00,
       "name": "b17497d184109670e075",
       "visualContainers": [
+        {
+          "config": "{\"name\":\"bg_canvas_rect\",\"layouts\":[{\"id\":0,\"position\":{\"x\":0,\"y\":0,\"z\":0,\"width\":1280,\"height\":720,\"tabOrder\":0}}],\"singleVisual\":{\"visualType\":\"basicShape\",\"objects\":{\"line\":[{\"properties\":{\"transparency\":100,\"weight\":0,\"lineColor\":{\"solid\":{\"color\":\"#080E1A\"}}}}],\"fill\":[{\"properties\":{\"show\":true,\"fillColor\":{\"solid\":{\"color\":\"#080E1A\"}},\"transparency\":0}}]},\"vcObjects\":{\"background\":[{\"properties\":{\"show\":false}}],\"border\":[{\"properties\":{\"show\":false}}],\"visualHeader\":[{\"properties\":{\"show\":false}}]}}}",
+          "filters": "[]",
+          "height": 720.00,
+          "width": 1280.00,
+          "x": 0.00,
+          "y": 0.00,
+          "z": 0.00
+        },
         {
           "config": "{\"name\":\"a0b1c2d3e4f5a6b7c8d9\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":10,\"z\":0,\"width\":200,\"height\":100,\"tabOrder\":0}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Total Market Cap (USD)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Market Cap (USD)\"},\"Name\":\"measure.Total Market Cap (USD)\",\"NativeReferenceName\":\"Total Market Cap (USD)\"}]},\"drillFilterOtherVisuals\":true}}",
           "filters": "[]",
