@@ -95,9 +95,12 @@ class FabricClient:
             return
         resp.raise_for_status()
 
-    def get_item_definition(self, workspace_id: str, item_id: str) -> list[dict]:
+    def get_item_definition(self, workspace_id: str, item_id: str, fmt: str | None = None) -> list[dict]:
+        url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if fmt:
+            url += f"?format={fmt}"
         resp = requests.post(
-            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition",
+            url,
             headers=self._headers(),
             timeout=60,
         )
