@@ -165,6 +165,7 @@ def main() -> None:
     success, failed = 0, []
 
     # ── Phase 1: Notebooks + SemanticModel ───────────────────────────────────
+    sm_names_deployed: list[str] = []
     if phase1:
         print("── Phase 1: Notebooks + SemanticModel ──")
     for item_path in phase1:
@@ -176,8 +177,23 @@ def main() -> None:
         )
         if _deploy_item(client, workspace_id, existing, item_path, parts):
             success += 1
+            if get_item_type(item_path.name) == "SemanticModel":
+                sm_names_deployed.append(get_display_name(item_path))
         else:
             failed.append(get_display_name(item_path))
+
+    # ── Phase 1b: Refresh deployed SemanticModels ────────────────────────────
+    if sm_names_deployed:
+        print("── Phase 1b: SemanticModel Refresh ──")
+        workspace_items_sm = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id)}
+        for sm_name in sm_names_deployed:
+            if sm_name in workspace_items_sm:
+                print(f"  Refreshing [{sm_name}]...")
+                try:
+                    client.refresh_semantic_model(workspace_id, workspace_items_sm[sm_name])
+                    print(f"  OK: {sm_name} refreshed\n")
+                except Exception as exc:
+                    print(f"  WARN: {sm_name} refresh failed — {exc}\n")
 
     # ── Phase 2: DataPipeline (patch notebook IDs) ───────────────────────────
     if phase2:

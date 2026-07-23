@@ -117,6 +117,20 @@ class FabricClient:
         )
         resp.raise_for_status()
 
+    def refresh_semantic_model(self, workspace_id: str, item_id: str) -> None:
+        # DirectLake models require a refresh (framing) after deploy; without it
+        # DAX queries fail with "table is not refreshed" even though the model exists.
+        resp = requests.post(
+            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/jobs/instances?jobType=DefaultJob",
+            headers=self._headers(),
+            json={},
+            timeout=60,
+        )
+        if resp.status_code == 202:
+            self._poll(resp.headers["Location"])
+            return
+        resp.raise_for_status()
+
     def update_item_definition(
         self,
         workspace_id: str,
