@@ -62,6 +62,36 @@
             ]
           }
         ]
+      },
+      {
+        "name": "refresh_semantic_model",
+        "type": "PBISemanticModelRefresh",
+        "dependsOn": [
+          {
+            "activity": "update_gold",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "method": "POST",
+          "operationType": "SemanticModelRefresh",
+          "groupId": "00000000-0000-0000-0000-000000000000",
+          "datasetId": "00000000-0000-0000-0000-000000000000",
+          "waitOnCompletion": true,
+          "commitMode": "Transactional"
+        },
+        "externalReferences": {
+          "connection": "e2ebf1a8-f1e9-4f59-96ec-df4215909357"
+        }
       }
     ]
   }
