@@ -26,26 +26,29 @@ jobs:
 
       - name: Trigger DEV orchestration pipeline
         run: |
-          curl -s -X POST \
+          curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_DEV }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_DEV }}/jobs/instances?jobType=Pipeline" \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "Content-Type: application/json" \
+            -d '{}' \
             -w "\nHTTP Status: %{http_code}"
 
       - name: Trigger QA orchestration pipeline
         run: |
-          curl -s -X POST \
+          curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_QA }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_QA }}/jobs/instances?jobType=Pipeline" \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "Content-Type: application/json" \
+            -d '{}' \
             -w "\nHTTP Status: %{http_code}"
 
       - name: Trigger PRD orchestration pipeline
         run: |
-          curl -s -X POST \
+          curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_PRD }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_PRD }}/jobs/instances?jobType=Pipeline" \
             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
             -H "Content-Type: application/json" \
+            -d '{}' \
             -w "\nHTTP Status: %{http_code}"
 
       - name: Notify on failure
