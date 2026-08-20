@@ -95,17 +95,39 @@ class FabricClient:
             return
         resp.raise_for_status()
 
-    def get_item_definition(self, workspace_id: str, item_id: str) -> list[dict]:
-        resp = requests.post(
-            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition",
-            headers=self._headers(),
-            timeout=60,
-        )
+    def get_item_definition_raw(self, workspace_id: str, item_id: str, fmt: str | None = None) -> str:
+        url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if fmt:
+            url += f"?format={fmt}"
+        resp = requests.post(url, headers=self._headers(), json={}, timeout=60)
+        print(f"  getDefinition status: {resp.status_code}")
         if resp.status_code == 202:
-            self._poll(resp.headers["Location"])
-            resp = requests.get(resp.headers["Location"], headers=self._headers(), timeout=30)
-            resp.raise_for_status()
-            return resp.json().get("definition", {}).get("parts", [])
+            location = resp.headers["Location"]
+            print(f"  Location: {location}")
+            self._poll(location)
+            # Fabric LRO result lives at /result suffix, not the status URL itself
+            result_resp = requests.get(location + "/result", headers=self._headers(), timeout=30)
+            print(f"  /result status: {result_resp.status_code}")
+            if result_resp.status_code == 200:
+                return result_resp.text
+            # Fallback: try the operation URL itself
+            fallback = requests.get(location, headers=self._headers(), timeout=30)
+            fallback.raise_for_status()
+            return fallback.text
+        resp.raise_for_status()
+        return resp.text
+
+    def get_item_definition(self, workspace_id: str, item_id: str, fmt: str | None = None) -> list[dict]:
+        url = f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if fmt:
+            url += f"?format={fmt}"
+        resp = requests.post(url, headers=self._headers(), json={}, timeout=60)
+        if resp.status_code == 202:
+            location = resp.headers["Location"]
+            self._poll(location)
+            result = requests.get(location + "/result", headers=self._headers(), timeout=30)
+            result.raise_for_status()
+            return result.json().get("definition", {}).get("parts", [])
         resp.raise_for_status()
         return resp.json().get("definition", {}).get("parts", [])
 
@@ -115,6 +137,20 @@ class FabricClient:
             headers=self._headers(),
             timeout=30,
         )
+        resp.raise_for_status()
+
+    def refresh_semantic_model(self, workspace_id: str, item_id: str) -> None:
+        # DirectLake models require a refresh (framing) after deploy; without it
+        # DAX queries fail with "table is not refreshed" even though the model exists.
+        resp = requests.post(
+            f"{_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/jobs/instances?jobType=DefaultJob",
+            headers=self._headers(),
+            json={},
+            timeout=60,
+        )
+        if resp.status_code == 202:
+            self._poll(resp.headers["Location"])
+            return
         resp.raise_for_status()
 
     def update_item_definition(

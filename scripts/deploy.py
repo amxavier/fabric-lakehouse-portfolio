@@ -37,6 +37,8 @@ from utils import (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+SEMANTIC_MODEL_NAME = "sm_crypto_medallion"
+
 ARTIFACT_DIRS = [
     REPO_ROOT / "notebooks",
     REPO_ROOT / "pipelines",
@@ -165,6 +167,7 @@ def main() -> None:
     success, failed = 0, []
 
     # ── Phase 1: Notebooks + SemanticModel ───────────────────────────────────
+    sm_names_deployed: list[str] = []
     if phase1:
         print("── Phase 1: Notebooks + SemanticModel ──")
     for item_path in phase1:
@@ -176,8 +179,23 @@ def main() -> None:
         )
         if _deploy_item(client, workspace_id, existing, item_path, parts):
             success += 1
+            if get_item_type(item_path.name) == "SemanticModel":
+                sm_names_deployed.append(get_display_name(item_path))
         else:
             failed.append(get_display_name(item_path))
+
+    # ── Phase 1b: Refresh deployed SemanticModels ────────────────────────────
+    if sm_names_deployed:
+        print("── Phase 1b: SemanticModel Refresh ──")
+        workspace_items_sm = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id)}
+        for sm_name in sm_names_deployed:
+            if sm_name in workspace_items_sm:
+                print(f"  Refreshing [{sm_name}]...")
+                try:
+                    client.refresh_semantic_model(workspace_id, workspace_items_sm[sm_name])
+                    print(f"  OK: {sm_name} refreshed\n")
+                except Exception as exc:
+                    print(f"  WARN: {sm_name} refresh failed — {exc}\n")
 
     # ── Phase 2: DataPipeline (patch notebook IDs) ───────────────────────────
     if phase2:
@@ -192,16 +210,27 @@ def main() -> None:
         }
         print(f"  Notebook ID mapping: {len(logicalid_to_itemid)} notebooks resolved\n")
 
+        # Resolved here (not just in Phase 3) so the pipeline's
+        # PBISemanticModelRefresh activity can be patched to point at this
+        # workspace's own semantic model. None if the model hasn't been
+        # deployed to this workspace yet — patch_pipeline_notebook_ids leaves
+        # groupId/datasetId untouched in that case rather than writing a
+        # bogus reference.
+        sm_item_id = workspace_items.get(SEMANTIC_MODEL_NAME)
+
         for item_path in phase2:
             parts = read_item_parts(item_path, replacements or None)
-            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id)
+            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id, sm_item_id)
             # Debug: confirm what is being sent to Fabric
             for p in parts:
                 if p["path"] == "pipeline-content.json":
                     sent = json.loads(base64.b64decode(p["payload"]))
                     for act in sent.get("properties", {}).get("activities", []):
                         tp = act.get("typeProperties", {})
-                        print(f"  [PATCH] {act['name']}: notebookId={tp.get('notebookId')} workspaceId={tp.get('workspaceId')}")
+                        if act.get("type") == "PBISemanticModelRefresh":
+                            print(f"  [PATCH] {act['name']}: groupId={tp.get('groupId')} datasetId={tp.get('datasetId')}")
+                        else:
+                            print(f"  [PATCH] {act['name']}: notebookId={tp.get('notebookId')} workspaceId={tp.get('workspaceId')}")
             if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                 success += 1
             else:
@@ -211,18 +240,17 @@ def main() -> None:
     if phase3:
         print("── Phase 3: Report ──")
         workspace_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id)}
-        sm_display_name = "sm_crypto_medallion"
-        if sm_display_name not in workspace_items:
-            print(f"  FAILED: {sm_display_name} not found in workspace — deploy it first.\n")
+        if SEMANTIC_MODEL_NAME not in workspace_items:
+            print(f"  FAILED: {SEMANTIC_MODEL_NAME} not found in workspace — deploy it first.\n")
             failed.extend(get_display_name(p) for p in phase3)
         else:
-            sm_item_id = workspace_items[sm_display_name]
+            sm_item_id = workspace_items[SEMANTIC_MODEL_NAME]
             workspace_name = client.get_workspace_name(workspace_id)
             print(f"  Workspace name : {workspace_name}")
-            print(f"  SemanticModel  : {sm_display_name} ({sm_item_id})\n")
+            print(f"  SemanticModel  : {SEMANTIC_MODEL_NAME} ({sm_item_id})\n")
             for item_path in phase3:
                 parts = read_item_parts(item_path, replacements or None)
-                parts = patch_report_byconnection(parts, workspace_name, sm_display_name, sm_item_id)
+                parts = patch_report_byconnection(parts, workspace_name, SEMANTIC_MODEL_NAME, sm_item_id)
                 if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                     success += 1
                 else:

@@ -1,5 +1,5 @@
 {
-  "name": "CY26SU04",
+  "name": "CryptoDark",
   "dataColors": [
     "#F7931A",
     "#3B82F6",
@@ -84,11 +84,6 @@
   "visualStyles": {
     "*": {
       "*": {
-        "*": [
-          {
-            "wordWrap": true
-          }
-        ],
         "line": [
           {
             "transparency": 0
@@ -369,6 +364,17 @@
     },
     "cardVisual": {
       "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#0F1928"
+              }
+            },
+            "transparency": 0
+          }
+        ],
         "layout": [
           {
             "maxTiles": 3
@@ -378,7 +384,12 @@
             "cellPadding": 12,
             "paddingIndividual": false,
             "paddingUniform": 12,
-            "backgroundShow": true
+            "backgroundShow": true,
+            "backgroundColor": {
+              "solid": {
+                "color": "#0F1928"
+              }
+            }
           }
         ],
         "overflow": [
@@ -690,6 +701,16 @@
         "legend": [
           {
             "showGradientLegend": true
+          }
+        ],
+        "plotArea": [
+          {
+            "transparency": 0,
+            "color": {
+              "solid": {
+                "color": "#0F1928"
+              }
+            }
           }
         ],
         "smallMultiplesLayout": [
@@ -1015,6 +1036,7 @@
         ],
         "background": [
           {
+            "show": true,
             "color": {
               "solid": {
                 "color": "#080E1A"
