@@ -21,6 +21,14 @@ on:
         options:
           - selective
           - full
+      skip_deploy:
+        description: "Skip deploy — only run debug step (to capture Fabric's stored format)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   deploy:
@@ -40,9 +48,19 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Deploy artifacts
+        if: github.event.inputs.skip_deploy != 'true'
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           DEPLOY_MODE: ${{ github.event.inputs.deploy_mode || 'selective' }}
         run: python scripts/deploy.py
+
+      - name: Debug report definition (temporary)
+        if: github.ref_name == 'dev'
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          BRANCH: dev
+        run: python scripts/debug_report.py
